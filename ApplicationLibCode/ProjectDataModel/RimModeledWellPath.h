@@ -20,6 +20,7 @@
 #include "RimWellPath.h"
 
 #include "cafPdmChildField.h"
+#include "cafPdmPtrField.h"
 
 class RimWellPathTarget;
 class RimWellPath;
@@ -33,6 +34,7 @@ public:
     RimModeledWellPath();
     ~RimModeledWellPath() override;
 
+    void                    setParentWell( RimWellPath* parentWell, double tieInMeasuredDepth );
     void                    createWellPathGeometry();
     void                    updateWellPathVisualization();
     void                    scheduleUpdateOfDependentVisualization();
@@ -44,5 +46,16 @@ private:
     void defineUiOrdering( QString uiConfigName, caf::PdmUiOrdering& uiOrdering ) override;
     void onGeometryDefinitionChanged( const caf::SignalEmitter* emitter, bool fullUpdate );
 
+    void fieldChangedByUi( const caf::PdmFieldHandle* changedField, const QVariant& oldValue, const QVariant& newValue ) override;
+
+    QList<caf::PdmOptionItemInfo> calculateValueOptions( const caf::PdmFieldHandle* fieldNeedingOptions,
+                                                         bool*                      useOptionsOnly ) override;
+
+    void updateGeometry( bool fullUpdate );
+    void updateTieInLocationFromParentWell();
+
+private:
     caf::PdmChildField<RimWellPathGeometryDef*> m_geometryDefinition;
+    caf::PdmPtrField<RimWellPath*>              m_parentWell;
+    caf::PdmField<double>                       m_tieInMeasuredDepth;
 };

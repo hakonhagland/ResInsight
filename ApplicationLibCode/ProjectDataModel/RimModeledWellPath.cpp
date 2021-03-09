@@ -18,21 +18,23 @@
 
 #include "RimModeledWellPath.h"
 
+#include "RiaCompletionTypeCalculationScheduler.h"
 #include "RicfCommandObject.h"
-#include "RimProject.h"
-#include "RimWellPathGeometryDef.h"
-
+#include "RifTextDataTableFormatter.h"
 #include "RigWellPath.h"
 
-#include "RiaCompletionTypeCalculationScheduler.h"
-#include "RifTextDataTableFormatter.h"
 #include "RimExtrudedCurveIntersection.h"
 #include "RimPlotCurve.h"
+#include "RimProject.h"
+#include "RimTools.h"
 #include "RimWellPath.h"
 #include "RimWellPathFracture.h"
 #include "RimWellPathFractureCollection.h"
+#include "RimWellPathGeometryDef.h"
+#include "RimWellPathTarget.h"
 
 #include "cafPdmFieldScriptingCapability.h"
+#include "cafPdmUiDoubleValueEditor.h"
 #include "cafPdmUiTreeOrdering.h"
 
 CAF_PDM_SOURCE_INIT( RimModeledWellPath, "ModeledWellPath" );
@@ -62,6 +64,10 @@ RimModeledWellPath::RimModeledWellPath()
     m_name.uiCapability()->setUiHidden( false );
     m_name.xmlCapability()->setIOReadable( true );
     m_name.xmlCapability()->setIOWritable( true );
+
+    CAF_PDM_InitFieldNoDefault( &m_parentWell, "ParentWellPath", "ParentWellPath", "", "", "" );
+    CAF_PDM_InitFieldNoDefault( &m_tieInMeasuredDepth, "TieInMeasuredDepth", "TieInMeasuredDepth", "", "", "" );
+    m_tieInMeasuredDepth.uiCapability()->setUiEditorTypeName( caf::PdmUiDoubleValueEditor::uiEditorTypeName() );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -69,6 +75,15 @@ RimModeledWellPath::RimModeledWellPath()
 //--------------------------------------------------------------------------------------------------
 RimModeledWellPath::~RimModeledWellPath()
 {
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimModeledWellPath::setParentWell( RimWellPath* parentWell, double tieInMeasuredDepth )
+{
+    m_parentWell         = parentWell;
+    m_tieInMeasuredDepth = tieInMeasuredDepth;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -191,6 +206,9 @@ void RimModeledWellPath::defineUiTreeOrdering( caf::PdmUiTreeOrdering& uiTreeOrd
 void RimModeledWellPath::defineUiOrdering( QString uiConfigName, caf::PdmUiOrdering& uiOrdering )
 {
     uiOrdering.add( &m_name );
+    uiOrdering.add( &m_parentWell );
+    uiOrdering.add( &m_tieInMeasuredDepth );
+
     RimWellPath::defineUiOrdering( uiConfigName, uiOrdering );
 }
 
@@ -199,9 +217,92 @@ void RimModeledWellPath::defineUiOrdering( QString uiConfigName, caf::PdmUiOrder
 //--------------------------------------------------------------------------------------------------
 void RimModeledWellPath::onGeometryDefinitionChanged( const caf::SignalEmitter* emitter, bool fullUpdate )
 {
+    updateGeometry( fullUpdate );
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimModeledWellPath::fieldChangedByUi( const caf::PdmFieldHandle* changedField,
+                                           const QVariant&            oldValue,
+                                           const QVariant&            newValue )
+{
+    if ( changedField == &m_tieInMeasuredDepth || changedField == &m_parentWell )
+    {
+        if ( m_parentWell() )
+        {
+            updateTieInLocationFromParentWell();
+
+            bool fullUpdate = true;
+            updateGeometry( fullUpdate );
+        }
+    }
+
+    RimWellPath::fieldChangedByUi( changedField, oldValue, newValue );
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+QList<caf::PdmOptionItemInfo> RimModeledWellPath::calculateValueOptions( const caf::PdmFieldHandle* fieldNeedingOptions,
+                                                                         bool*                      useOptionsOnly )
+{
+    QList<caf::PdmOptionItemInfo> options;
+
+    if ( fieldNeedingOptions == &m_parentWell )
+    {
+        std::vector<RimWellPath*> wellPathsToExclude = { this };
+        RimTools::wellPathOptionItemsSubset( wellPathsToExclude, &options );
+
+        options.push_front( caf::PdmOptionItemInfo( "None", nullptr ) );
+    }
+
+    return options;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimModeledWellPath::updateGeometry( bool fullUpdate )
+{
     updateWellPathVisualization();
+
+    std::vector<RimModeledWellPath*> childWellPaths;
+    objectsWithReferringPtrFieldsOfType( childWellPaths );
+    for ( auto childWellPath : childWellPaths )
+    {
+        childWellPath->updateTieInLocationFromParentWell();
+    }
+
     if ( fullUpdate )
     {
         scheduleUpdateOfDependentVisualization();
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimModeledWellPath::updateTieInLocationFromParentWell()
+{
+    if ( !m_parentWell ) return;
+
+    auto targets = m_geometryDefinition->activeWellTargets();
+    if ( !targets.empty() )
+    {
+        auto [pointVector, measuredDepths] =
+            m_parentWell->wellPathGeometry()->clippedPointSubset( m_parentWell->wellPathGeometry()->measuredDepths().front(),
+                                                                  m_tieInMeasuredDepth() );
+
+        if ( pointVector.size() < 2u ) return;
+
+        auto firstTarget = targets.front();
+        firstTarget->setPointXYZ( pointVector.back() );
+
+        m_geometryDefinition->setMdAtFirstTarget( measuredDepths.back() );
+        m_geometryDefinition->setFixedWellPathPoints( pointVector );
+        m_geometryDefinition->setFixedMeasuredDepths( measuredDepths );
+
+        updateGeometry( true );
     }
 }
