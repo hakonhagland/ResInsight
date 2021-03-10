@@ -97,6 +97,7 @@ void RicNewWellPathLateralAtDepthFeature::onActionTriggered( bool isChecked )
         }
 
         newModeledWellPath->geometryDefinition()->enableTargetPointPicking( true );
+        newModeledWellPath->setUnitSystem( parentwWellPath->unitSystem() );
 
         newModeledWellPath->createWellPathGeometry();
         if ( wellPathGroup )

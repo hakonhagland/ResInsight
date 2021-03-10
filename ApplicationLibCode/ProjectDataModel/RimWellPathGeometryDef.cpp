@@ -74,7 +74,10 @@ RimWellPathGeometryDef::RimWellPathGeometryDef()
 
     CAF_PDM_InitScriptableField( &m_airGap, "AirGap", 0.0, "Air Gap", "", "", "" );
     m_airGap.uiCapability()->setUiEditorTypeName( caf::PdmUiDoubleValueEditor::uiEditorTypeName() );
+
     CAF_PDM_InitScriptableField( &m_mdAtFirstTarget, "MdAtFirstTarget", 0.0, "MD at First Target", "", "", "" );
+    m_mdAtFirstTarget.uiCapability()->setUiEditorTypeName( caf::PdmUiDoubleValueEditor::uiEditorTypeName() );
+
     CAF_PDM_InitScriptableFieldNoDefault( &m_wellTargets, "WellPathTargets", "Well Targets", "", "", "" );
     m_wellTargets.uiCapability()->setUiEditorTypeName( caf::PdmUiTableViewEditor::uiEditorTypeName() );
     m_wellTargets.uiCapability()->setUiTreeChildrenHidden( true );
