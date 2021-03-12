@@ -29,7 +29,6 @@
 #include "RimWellPath.h"
 #include "RimWellPathCollection.h"
 #include "RimWellPathGeometryDef.h"
-#include "RimWellPathGroup.h"
 #include "RimWellPathTarget.h"
 
 #include "Riu3DMainWindowTools.h"
@@ -66,8 +65,6 @@ void RicNewWellPathLateralAtDepthFeature::onActionTriggered( bool isChecked )
 
     RimWellPath* parentwWellPath = wellPathSelItem->m_wellpath;
     CVF_ASSERT( parentwWellPath );
-    RimWellPathGroup* wellPathGroup = nullptr;
-    parentwWellPath->firstAncestorOrThisOfType( wellPathGroup );
 
     RimProject*            project      = RimProject::current();
     RimWellPathCollection* wellPathColl = RimTools::wellPathCollection();
@@ -100,18 +97,11 @@ void RicNewWellPathLateralAtDepthFeature::onActionTriggered( bool isChecked )
         newModeledWellPath->setUnitSystem( parentwWellPath->unitSystem() );
 
         newModeledWellPath->createWellPathGeometry();
-        if ( wellPathGroup )
-        {
-            wellPathGroup->addChildWellPath( newModeledWellPath );
-        }
-        else
-        {
-            bool importedWellPath = false;
-            wellPathColl->addWellPath( newModeledWellPath, importedWellPath );
-            wellPathColl->groupWellPaths( { parentwWellPath, newModeledWellPath } );
-        }
-        newModeledWellPath->firstAncestorOrThisOfTypeAsserted( wellPathGroup );
-        wellPathGroup->updateAllRequiredEditors();
+
+        bool importGrouped = false;
+        wellPathColl->addWellPath( newModeledWellPath, importGrouped );
+        wellPathColl->updateAllRequiredEditors();
+
         project->scheduleCreateDisplayModelAndRedrawAllViews();
 
         Riu3DMainWindowTools::selectAsCurrentItem( newModeledWellPath->geometryDefinition() );

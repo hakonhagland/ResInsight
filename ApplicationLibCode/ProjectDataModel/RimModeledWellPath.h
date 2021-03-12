@@ -34,7 +34,10 @@ public:
     RimModeledWellPath();
     ~RimModeledWellPath() override;
 
-    void                    setParentWell( RimWellPath* parentWell, double tieInMeasuredDepth );
+    void         setParentWell( RimWellPath* parentWell, double tieInMeasuredDepth );
+    RimWellPath* parentWell() const;
+    double       tieInMeasuredDepth() const;
+
     void                    createWellPathGeometry();
     void                    updateWellPathVisualization();
     void                    scheduleUpdateOfDependentVisualization();

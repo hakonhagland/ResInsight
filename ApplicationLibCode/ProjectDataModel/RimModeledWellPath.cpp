@@ -89,6 +89,22 @@ void RimModeledWellPath::setParentWell( RimWellPath* parentWell, double tieInMea
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+RimWellPath* RimModeledWellPath::parentWell() const
+{
+    return m_parentWell();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+double RimModeledWellPath::tieInMeasuredDepth() const
+{
+    return m_tieInMeasuredDepth();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 void RimModeledWellPath::createWellPathGeometry()
 {
     this->setWellPathGeometry( m_geometryDefinition->createWellPathGeometry().p() );

@@ -47,11 +47,12 @@
 #include "RimWellPathCompletions.h"
 #include "RimWellPathFracture.h"
 #include "RimWellPathFractureCollection.h"
-#include "RimWellPathGroup.h"
 #include "RimWellPathValve.h"
 
 #include <QFile>
 
+#include "RimModeledWellPath.h"
+#include "RimProject.h"
 #include <algorithm>
 
 //--------------------------------------------------------------------------------------------------
@@ -425,7 +426,20 @@ void RicWellPathExportMswCompletionsImpl::writeWelsegsSegmentsRecursively( RifTe
 
     for ( auto childBranch : branch->branches() )
     {
-        writeWelsegsSegmentsRecursively( formatter, exportInfo, childBranch, segmentNumber, maxSegmentLength, outletSegment );
+        RicMswSegment* tieInSegment = nullptr;
+
+        for ( auto seg : branch->segments() )
+        {
+            if ( seg->startMD() < childBranch->startMD() && childBranch->startMD() < seg->endMD() )
+            {
+                tieInSegment = seg;
+            }
+        }
+
+        RicMswSegment* outletSegmentForChild = outletSegment;
+        if ( tieInSegment ) outletSegmentForChild = tieInSegment;
+
+        writeWelsegsSegmentsRecursively( formatter, exportInfo, childBranch, segmentNumber, maxSegmentLength, outletSegmentForChild );
     }
 }
 
@@ -1034,46 +1048,47 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
     exportInfo->setHasSubGridIntersections( exportInfo->hasSubGridIntersections() || foundSubGridIntersections );
     exportInfo->mainBoreBranch()->sortSegments();
 
-    if ( auto wellPathGroup = dynamic_cast<const RimWellPathGroup*>( wellPath ); wellPathGroup != nullptr )
-    {
-        auto initialChildMD  = wellPathGroup->uniqueEndMD();
-        auto initialChildTVD = tvdFromMeasuredDepth( wellPathGroup, initialMD );
-        for ( auto childWellPath : wellPathGroup->childWellPaths() )
+    /*
+        if ( auto wellPathGroup = dynamic_cast<const RimWellPathGroup*>( wellPath ); wellPathGroup != nullptr )
         {
-            auto childCellIntersections =
-                generateCellSegments( caseToApply, childWellPath, mswParameters, &initialChildMD );
-            auto childBranch =
-                std::make_unique<RicMswBranch>( childWellPath->name(), childWellPath, initialChildMD, initialChildTVD );
-
-            if ( wellPathGroup->outletValve() )
+            auto initialChildMD  = wellPathGroup->uniqueEndMD();
+            auto initialChildTVD = tvdFromMeasuredDepth( wellPathGroup, initialMD );
+            for ( auto childWellPath : wellPathGroup->childWellPaths() )
             {
-                childBranch       = RicMswValve::createExportValve( QString( "%1 valve for %2" )
-                                                                  .arg( wellPathGroup->outletValve()->componentLabel() )
-                                                                  .arg( childWellPath->name() ),
-                                                              childWellPath,
-                                                              initialChildMD,
-                                                              initialChildTVD,
-                                                              wellPathGroup->outletValve() );
-                auto dummySegment = std::make_unique<
-                    RicMswSegment>( QString( "%1 segment" ).arg( wellPathGroup->outletValve()->componentLabel() ),
-                                    initialChildMD,
-                                    initialChildMD + 0.1,
-                                    initialChildTVD,
-                                    RicWellPathExportMswCompletionsImpl::tvdFromMeasuredDepth( wellPath,
-                                                                                               initialChildMD + 0.1 ) );
-                childBranch->addSegment( std::move( dummySegment ) );
-            }
+                auto childCellIntersections =
+                    generateCellSegments( caseToApply, childWellPath, mswParameters, &initialChildMD );
+                auto childBranch =
+                    std::make_unique<RicMswBranch>( childWellPath->name(), childWellPath, initialChildMD,
+       initialChildTVD );
 
-            generateFishbonesMswExportInfo( caseToApply,
-                                            childWellPath,
-                                            initialChildMD,
-                                            childCellIntersections,
-                                            enableSegmentSplitting,
-                                            exportInfo,
-                                            childBranch.get() );
-            branch->addChildBranch( std::move( childBranch ) );
+                if ( wellPathGroup->outletValve() )
+                {
+                    childBranch       = RicMswValve::createExportValve( QString( "%1 valve for %2" )
+                                                                      .arg(
+       wellPathGroup->outletValve()->componentLabel() ) .arg( childWellPath->name() ), childWellPath, initialChildMD,
+                                                                  initialChildTVD,
+                                                                  wellPathGroup->outletValve() );
+                    auto dummySegment = std::make_unique<
+                        RicMswSegment>( QString( "%1 segment" ).arg( wellPathGroup->outletValve()->componentLabel() ),
+                                        initialChildMD,
+                                        initialChildMD + 0.1,
+                                        initialChildTVD,
+                                        RicWellPathExportMswCompletionsImpl::tvdFromMeasuredDepth( wellPath,
+                                                                                                   initialChildMD + 0.1
+       ) ); childBranch->addSegment( std::move( dummySegment ) );
+                }
+
+                generateFishbonesMswExportInfo( caseToApply,
+                                                childWellPath,
+                                                initialChildMD,
+                                                childCellIntersections,
+                                                enableSegmentSplitting,
+                                                exportInfo,
+                                                childBranch.get() );
+                branch->addChildBranch( std::move( childBranch ) );
+            }
         }
-    }
+    */
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -1293,57 +1308,93 @@ bool RicWellPathExportMswCompletionsImpl::generatePerforationsMswExportInfo(
     exportInfo->setHasSubGridIntersections( exportInfo->hasSubGridIntersections() || foundSubGridIntersections );
     branch->sortSegments();
 
-    if ( auto wellPathGroup = dynamic_cast<const RimWellPathGroup*>( wellPath ); wellPathGroup != nullptr )
+    std::vector<RimModeledWellPath*> childPaths;
     {
-        auto mswParameters = wellPath->perforationIntervalCollection()->mswParameters();
-
-        if ( !mswParameters )
+        auto wellPaths = RimProject::current()->allWellPaths();
+        for ( auto w : wellPaths )
         {
-            RiaLogging::error( "generatePerforationsMswExportInfo: No mswParameters object found, aborting export" );
-        }
-        else
-        {
-            auto initialChildMD  = wellPathGroup->uniqueEndMD();
-            auto initialChildTVD = -wellPathGroup->wellPathGeometry()->interpolatedPointAlongWellPath( initialMD ).z();
-            for ( auto childWellPath : wellPathGroup->childWellPaths() )
+            auto modelWellPath = dynamic_cast<RimModeledWellPath*>( w );
+            if ( modelWellPath->parentWell() == wellPath )
             {
-                auto childCellIntersections =
-                    generateCellSegments( eclipseCase, childWellPath, mswParameters, &initialChildMD );
-                auto childBranch =
-                    std::make_unique<RicMswBranch>( childWellPath->name(), childWellPath, initialChildMD, initialChildTVD );
-
-                if ( wellPathGroup->outletValve() )
-                {
-                    childBranch       = RicMswValve::createExportValve( QString( "%1 valve for %2" )
-                                                                      .arg( wellPathGroup->outletValve()->componentLabel() )
-                                                                      .arg( childWellPath->name() ),
-                                                                  childWellPath,
-                                                                  initialChildMD,
-                                                                  initialChildTVD,
-                                                                  wellPathGroup->outletValve() );
-                    auto dummySegment = std::make_unique<
-                        RicMswSegment>( QString( "%1 segment" ).arg( wellPathGroup->outletValve()->componentLabel() ),
-                                        initialChildMD,
-                                        initialChildMD + 0.1,
-                                        initialChildTVD,
-                                        RicWellPathExportMswCompletionsImpl::tvdFromMeasuredDepth( wellPath,
-                                                                                                   initialChildMD + 0.1 ) );
-                    childBranch->addSegment( std::move( dummySegment ) );
-                }
-
-                if ( generatePerforationsMswExportInfo( eclipseCase,
-                                                        childWellPath,
-                                                        timeStep,
-                                                        initialChildMD,
-                                                        childCellIntersections,
-                                                        exportInfo,
-                                                        childBranch.get() ) )
-                {
-                    branch->addChildBranch( std::move( childBranch ) );
-                }
+                childPaths.push_back( modelWellPath );
             }
         }
     }
+
+    for ( auto childWellPath : childPaths )
+    {
+        auto initialChildMD  = childWellPath->tieInMeasuredDepth();
+        auto initialChildTVD = -childWellPath->wellPathGeometry()->interpolatedPointAlongWellPath( initialChildMD ).z();
+
+        auto mswParameters = childWellPath->perforationIntervalCollection()->mswParameters();
+
+        double startOfChildMD       = 0.0;
+        auto childCellIntersections = generateCellSegments( eclipseCase, childWellPath, mswParameters, &startOfChildMD );
+        auto childBranch =
+            std::make_unique<RicMswBranch>( childWellPath->name(), childWellPath, initialChildMD, initialChildTVD );
+
+        if ( generatePerforationsMswExportInfo( eclipseCase,
+                                                childWellPath,
+                                                timeStep,
+                                                initialChildMD,
+                                                childCellIntersections,
+                                                exportInfo,
+                                                childBranch.get() ) )
+        {
+            branch->addChildBranch( std::move( childBranch ) );
+        }
+    }
+
+    /*
+        if ( auto wellPathGroup = dynamic_cast<const RimWellPathGroup*>( wellPath ); wellPathGroup != nullptr )
+        {
+            auto mswParameters = wellPath->perforationIntervalCollection()->mswParameters();
+
+            if ( !mswParameters )
+            {
+                RiaLogging::error( "generatePerforationsMswExportInfo: No mswParameters object found, aborting export"
+       );
+            }
+            else
+            {
+                auto initialChildMD  = wellPathGroup->uniqueEndMD();
+                auto initialChildTVD = -wellPathGroup->wellPathGeometry()->interpolatedPointAlongWellPath( initialMD
+       ).z(); for ( auto childWellPath : wellPathGroup->childWellPaths() )
+                {
+                    auto childCellIntersections =
+                        generateCellSegments( eclipseCase, childWellPath, mswParameters, &initialChildMD );
+                    auto childBranch =
+                        std::make_unique<RicMswBranch>( childWellPath->name(), childWellPath, initialChildMD,
+       initialChildTVD );
+
+                    if ( wellPathGroup->outletValve() )
+                    {
+                        childBranch       = RicMswValve::createExportValve( QString( "%1 valve for %2" )
+                                                                          .arg(
+       wellPathGroup->outletValve()->componentLabel() ) .arg( childWellPath->name() ), childWellPath, initialChildMD,
+                                                                      initialChildTVD,
+                                                                      wellPathGroup->outletValve() );
+                        auto dummySegment = std::make_unique<
+                            RicMswSegment>( QString( "%1 segment" ).arg( wellPathGroup->outletValve()->componentLabel()
+       ), initialChildMD, initialChildMD + 0.1, initialChildTVD,
+       RicWellPathExportMswCompletionsImpl::tvdFromMeasuredDepth( wellPath, initialChildMD + 0.1 ) );
+       childBranch->addSegment( std::move( dummySegment ) );
+                    }
+
+                    if ( generatePerforationsMswExportInfo( eclipseCase,
+                                                            childWellPath,
+                                                            timeStep,
+                                                            initialChildMD,
+                                                            childCellIntersections,
+                                                            exportInfo,
+                                                            childBranch.get() ) )
+                    {
+                        branch->addChildBranch( std::move( childBranch ) );
+                    }
+                }
+            }
+        }
+    */
     return true;
 }
 
