@@ -90,7 +90,8 @@ void RicNewWellPathLateralAtDepthFeature::onActionTriggered( bool isChecked )
             auto               lastPoint = pointVector.back();
             auto               tangent   = lastPoint - pointVector[pointVector.size() - 2];
             newTarget->setAsPointXYZAndTangentTarget( { lastPoint[0], lastPoint[1], lastPoint[2] }, tangent );
-            newModeledWellPath->setParentWell( parentwWellPath, parentWellMD );
+
+            newModeledWellPath->connectWellPaths( parentwWellPath, parentWellMD );
         }
 
         newModeledWellPath->geometryDefinition()->enableTargetPointPicking( true );

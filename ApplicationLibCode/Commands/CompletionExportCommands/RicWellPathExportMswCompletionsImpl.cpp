@@ -47,6 +47,7 @@
 #include "RimWellPathCompletions.h"
 #include "RimWellPathFracture.h"
 #include "RimWellPathFractureCollection.h"
+#include "RimWellPathTieIn.h"
 #include "RimWellPathValve.h"
 
 #include <QFile>
@@ -1314,7 +1315,7 @@ bool RicWellPathExportMswCompletionsImpl::generatePerforationsMswExportInfo(
         for ( auto w : wellPaths )
         {
             auto modelWellPath = dynamic_cast<RimModeledWellPath*>( w );
-            if ( modelWellPath->parentWell() == wellPath )
+            if ( modelWellPath && modelWellPath->wellPathTieIn() && modelWellPath->wellPathTieIn()->parentWell() == wellPath )
             {
                 childPaths.push_back( modelWellPath );
             }
@@ -1323,7 +1324,7 @@ bool RicWellPathExportMswCompletionsImpl::generatePerforationsMswExportInfo(
 
     for ( auto childWellPath : childPaths )
     {
-        auto initialChildMD  = childWellPath->tieInMeasuredDepth();
+        auto initialChildMD  = childWellPath->wellPathTieIn()->tieInMeasuredDepth();
         auto initialChildTVD = -childWellPath->wellPathGeometry()->interpolatedPointAlongWellPath( initialChildMD ).z();
 
         auto mswParameters = childWellPath->perforationIntervalCollection()->mswParameters();

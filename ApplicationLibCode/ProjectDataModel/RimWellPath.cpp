@@ -62,6 +62,7 @@
 #include <QFileInfo>
 #include <QString>
 
+#include "RimWellPathTieIn.h"
 #include <regex>
 
 CAF_PDM_SOURCE_INIT( RimWellPath, "WellPathBase" );
@@ -130,6 +131,8 @@ RimWellPath::RimWellPath()
     CAF_PDM_InitFieldNoDefault( &m_wellPathAttributes, "WellPathAttributes", "Casing Design Rubbish", "", "", "" );
     m_wellPathAttributes = new RimWellPathAttributeCollection;
     m_wellPathAttributes->uiCapability()->setUiTreeHidden( true );
+
+    CAF_PDM_InitFieldNoDefault( &m_wellPathTieIn, "WellPathTieIn", "well Path Tie-In", "", "", "" );
 
     this->setDeletable( true );
 }
@@ -612,6 +615,11 @@ void RimWellPath::setWellPathGeometry( RigWellPath* wellPathModel )
 //--------------------------------------------------------------------------------------------------
 void RimWellPath::defineUiOrdering( QString uiConfigName, caf::PdmUiOrdering& uiOrdering )
 {
+    if ( m_wellPathTieIn() )
+    {
+        m_wellPathTieIn->uiOrdering( uiConfigName, uiOrdering );
+    }
+
     if ( m_simWellName().isEmpty() )
     {
         // Try to set default simulation well name
@@ -1061,4 +1069,22 @@ RimWellPath* RimWellPath::topLevelWellPath() const
 //--------------------------------------------------------------------------------------------------
 void RimWellPath::updateAfterAddingToWellPathGroup()
 {
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+RimWellPathTieIn* RimWellPath::wellPathTieIn() const
+{
+    return m_wellPathTieIn();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RimWellPath::connectWellPaths( RimWellPath* parentWell, double parentTieInMeasuredDepth )
+{
+    if ( !m_wellPathTieIn() ) m_wellPathTieIn = new RimWellPathTieIn;
+
+    m_wellPathTieIn->connectWellPaths( parentWell, this, parentTieInMeasuredDepth );
 }

@@ -32,6 +32,7 @@
 #include "RimWellPathFractureCollection.h"
 #include "RimWellPathGeometryDef.h"
 #include "RimWellPathTarget.h"
+#include "RimWellPathTieIn.h"
 
 #include "cafPdmFieldScriptingCapability.h"
 #include "cafPdmUiDoubleValueEditor.h"
@@ -64,10 +65,6 @@ RimModeledWellPath::RimModeledWellPath()
     m_name.uiCapability()->setUiHidden( false );
     m_name.xmlCapability()->setIOReadable( true );
     m_name.xmlCapability()->setIOWritable( true );
-
-    CAF_PDM_InitFieldNoDefault( &m_parentWell, "ParentWellPath", "ParentWellPath", "", "", "" );
-    CAF_PDM_InitFieldNoDefault( &m_tieInMeasuredDepth, "TieInMeasuredDepth", "TieInMeasuredDepth", "", "", "" );
-    m_tieInMeasuredDepth.uiCapability()->setUiEditorTypeName( caf::PdmUiDoubleValueEditor::uiEditorTypeName() );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -75,31 +72,6 @@ RimModeledWellPath::RimModeledWellPath()
 //--------------------------------------------------------------------------------------------------
 RimModeledWellPath::~RimModeledWellPath()
 {
-}
-
-//--------------------------------------------------------------------------------------------------
-///
-//--------------------------------------------------------------------------------------------------
-void RimModeledWellPath::setParentWell( RimWellPath* parentWell, double tieInMeasuredDepth )
-{
-    m_parentWell         = parentWell;
-    m_tieInMeasuredDepth = tieInMeasuredDepth;
-}
-
-//--------------------------------------------------------------------------------------------------
-///
-//--------------------------------------------------------------------------------------------------
-RimWellPath* RimModeledWellPath::parentWell() const
-{
-    return m_parentWell();
-}
-
-//--------------------------------------------------------------------------------------------------
-///
-//--------------------------------------------------------------------------------------------------
-double RimModeledWellPath::tieInMeasuredDepth() const
-{
-    return m_tieInMeasuredDepth();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -222,8 +194,6 @@ void RimModeledWellPath::defineUiTreeOrdering( caf::PdmUiTreeOrdering& uiTreeOrd
 void RimModeledWellPath::defineUiOrdering( QString uiConfigName, caf::PdmUiOrdering& uiOrdering )
 {
     uiOrdering.add( &m_name );
-    uiOrdering.add( &m_parentWell );
-    uiOrdering.add( &m_tieInMeasuredDepth );
 
     RimWellPath::defineUiOrdering( uiConfigName, uiOrdering );
 }
@@ -243,16 +213,7 @@ void RimModeledWellPath::fieldChangedByUi( const caf::PdmFieldHandle* changedFie
                                            const QVariant&            oldValue,
                                            const QVariant&            newValue )
 {
-    if ( changedField == &m_tieInMeasuredDepth || changedField == &m_parentWell )
-    {
-        if ( m_parentWell() )
-        {
-            updateTieInLocationFromParentWell();
-
-            bool fullUpdate = true;
-            updateGeometry( fullUpdate );
-        }
-    }
+    // TODO remove if nothing happens here
 
     RimWellPath::fieldChangedByUi( changedField, oldValue, newValue );
 }
@@ -265,14 +226,6 @@ QList<caf::PdmOptionItemInfo> RimModeledWellPath::calculateValueOptions( const c
 {
     QList<caf::PdmOptionItemInfo> options;
 
-    if ( fieldNeedingOptions == &m_parentWell )
-    {
-        std::vector<RimWellPath*> wellPathsToExclude = { this };
-        RimTools::wellPathOptionItemsSubset( wellPathsToExclude, &options );
-
-        options.push_front( caf::PdmOptionItemInfo( "None", nullptr ) );
-    }
-
     return options;
 }
 
@@ -283,11 +236,14 @@ void RimModeledWellPath::updateGeometry( bool fullUpdate )
 {
     updateWellPathVisualization();
 
-    std::vector<RimModeledWellPath*> childWellPaths;
-    objectsWithReferringPtrFieldsOfType( childWellPaths );
-    for ( auto childWellPath : childWellPaths )
+    std::vector<RimWellPathTieIn*> tieInObjects;
+    objectsWithReferringPtrFieldsOfType( tieInObjects );
+    for ( auto tieIn : tieInObjects )
     {
-        childWellPath->updateTieInLocationFromParentWell();
+        if ( tieIn->parentWell() == this )
+        {
+            tieIn->updateChildWellGeometry();
+        }
     }
 
     if ( fullUpdate )
@@ -301,14 +257,18 @@ void RimModeledWellPath::updateGeometry( bool fullUpdate )
 //--------------------------------------------------------------------------------------------------
 void RimModeledWellPath::updateTieInLocationFromParentWell()
 {
-    if ( !m_parentWell ) return;
+    RimWellPathTieIn* tieIn = wellPathTieIn();
+    if ( !tieIn ) return;
+
+    RimWellPath* parentWellPath = tieIn->parentWell();
+    if ( !parentWellPath ) return;
 
     auto targets = m_geometryDefinition->activeWellTargets();
     if ( !targets.empty() )
     {
         auto [pointVector, measuredDepths] =
-            m_parentWell->wellPathGeometry()->clippedPointSubset( m_parentWell->wellPathGeometry()->measuredDepths().front(),
-                                                                  m_tieInMeasuredDepth() );
+            parentWellPath->wellPathGeometry()->clippedPointSubset( parentWellPath->wellPathGeometry()->measuredDepths().front(),
+                                                                    tieIn->tieInMeasuredDepth() );
 
         if ( pointVector.size() < 2u ) return;
 
