@@ -146,6 +146,12 @@ public:
     QString pythonExecutable() const;
     QString octaveExecutable() const;
 
+    // geomech settings
+    QString geomechFRAPreprocCommand() const;
+    QString geomechFRAPostprocCommand() const;
+    QString geomechFRAMacrisCommand() const;
+    QString geomechFRADefaultXML() const;
+
     // Summary readers
     SummaryReaderMode summaryDataReader() const;
     bool              useOptimizedSummaryDataFiles() const;
@@ -203,6 +209,7 @@ protected:
 private:
     static QString tabNameGeneral();
     static QString tabNameEclipse();
+    static QString tabNameGeomech();
     static QString tabNamePlotting();
     static QString tabNameScripting();
     static QString tabNameExport();
@@ -256,6 +263,12 @@ private:
 
     // Well Path Import
     caf::PdmField<QString> m_multiLateralWellPattern;
+
+    // geomech things
+    caf::PdmField<QString> m_geomechFRAPreprocCommand;
+    caf::PdmField<QString> m_geomechFRAPostprocCommand;
+    caf::PdmField<QString> m_geomechFRAMacrisCommand;
+    caf::PdmField<QString> m_geomechFRADefaultXML;
 
     // Summary data
     caf::PdmField<bool> m_createOptimizedSummaryDataFile;
