@@ -1056,12 +1056,16 @@ bool RimWellPath::isMultiLateralWellPath() const
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-RimWellPath* RimWellPath::topLevelWellPath() const
+const RimWellPath* RimWellPath::topLevelWellPath() const
 {
-    std::vector<RimWellPath*> wellPathHierarchy;
-    this->allAncestorsOrThisOfType( wellPathHierarchy );
-    RimWellPath* wellPath = wellPathHierarchy.back();
-    return wellPath;
+    RimWellPath* parent = nullptr;
+
+    if ( m_wellPathTieIn() && m_wellPathTieIn->parentWell() )
+    {
+        return m_wellPathTieIn()->parentWell()->topLevelWellPath();
+    }
+
+    return this;
 }
 
 //--------------------------------------------------------------------------------------------------
