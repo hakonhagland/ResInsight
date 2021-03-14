@@ -18,10 +18,11 @@
 
 #include "RimWellPathTieIn.h"
 
-#include "RimTools.h"
-
 #include "RimModeledWellPath.h"
+#include "RimTools.h"
+#include "RimWellPathValve.h"
 
+#include "cafPdmFieldScriptingCapability.h"
 #include "cafPdmObjectScriptingCapability.h"
 #include "cafPdmUiDoubleValueEditor.h"
 
@@ -38,6 +39,18 @@ RimWellPathTieIn::RimWellPathTieIn()
     CAF_PDM_InitFieldNoDefault( &m_childWell, "ChildWellPath", "ChildWellPath", "", "", "" );
     CAF_PDM_InitFieldNoDefault( &m_tieInMeasuredDepth, "TieInMeasuredDepth", "TieInMeasuredDepth", "", "", "" );
     m_tieInMeasuredDepth.uiCapability()->setUiEditorTypeName( caf::PdmUiDoubleValueEditor::uiEditorTypeName() );
+
+    CAF_PDM_InitScriptableField( &m_addValveAtConnection,
+                                 "AddValveAtConnection",
+                                 false,
+                                 "Add Outlet Valve for Branches",
+                                 "",
+                                 "",
+                                 "" );
+
+    CAF_PDM_InitScriptableFieldNoDefault( &m_valve, "Valve", "Branch Outlet Valve", "", "", "" );
+
+    m_valve = new RimWellPathValve;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -89,10 +102,25 @@ void RimWellPathTieIn::updateChildWellGeometry()
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+const RimWellPathValve* RimWellPathTieIn::outletValve() const
+{
+    return m_addValveAtConnection() && m_valve() && m_valve->valveTemplate() ? m_valve() : nullptr;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 void RimWellPathTieIn::defineUiOrdering( QString uiConfigName, caf::PdmUiOrdering& uiOrdering )
 {
     uiOrdering.add( &m_parentWell );
     uiOrdering.add( &m_tieInMeasuredDepth );
+
+    auto valveGroup = uiOrdering.addNewGroup( "Valve Settings" );
+    valveGroup->add( &m_addValveAtConnection );
+    if ( m_addValveAtConnection )
+    {
+        m_valve->uiOrdering( "TemplateOnly", *valveGroup );
+    }
 
     uiOrdering.skipRemainingFields();
 }

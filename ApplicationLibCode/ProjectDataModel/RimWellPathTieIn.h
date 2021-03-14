@@ -24,6 +24,7 @@
 #include "cafPdmPtrField.h"
 
 class RimWellPath;
+class RimWellPathValve;
 
 class RimWellPathTieIn : public caf::PdmObject
 {
@@ -39,6 +40,8 @@ public:
     RimWellPath* childWell() const;
     void         updateChildWellGeometry();
 
+    const RimWellPathValve* outletValve() const;
+
 private:
     void defineUiOrdering( QString uiConfigName, caf::PdmUiOrdering& uiOrdering ) override;
 
@@ -51,4 +54,7 @@ private:
     caf::PdmPtrField<RimWellPath*> m_parentWell;
     caf::PdmPtrField<RimWellPath*> m_childWell;
     caf::PdmField<double>          m_tieInMeasuredDepth;
+
+    caf::PdmField<bool>                   m_addValveAtConnection;
+    caf::PdmChildField<RimWellPathValve*> m_valve;
 };
