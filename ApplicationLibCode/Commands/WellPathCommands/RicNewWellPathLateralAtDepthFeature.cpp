@@ -64,8 +64,8 @@ void RicNewWellPathLateralAtDepthFeature::onActionTriggered( bool isChecked )
     RiuWellPathSelectionItem* wellPathSelItem = wellPathSelectionItem();
     CVF_ASSERT( wellPathSelItem );
 
-    RimWellPath* parentwWellPath = wellPathSelItem->m_wellpath;
-    CVF_ASSERT( parentwWellPath );
+    RimWellPath* parentWellPath = wellPathSelItem->m_wellpath;
+    CVF_ASSERT( parentWellPath );
 
     RimProject*            project      = RimProject::current();
     RimWellPathCollection* wellPathColl = RimTools::wellPathCollection();
@@ -76,8 +76,8 @@ void RicNewWellPathLateralAtDepthFeature::onActionTriggered( bool isChecked )
         auto newModeledWellPath = new RimModeledWellPath();
 
         auto [pointVector, measuredDepths] =
-            parentwWellPath->wellPathGeometry()
-                ->clippedPointSubset( parentwWellPath->wellPathGeometry()->measuredDepths().front(), parentWellMD );
+            parentWellPath->wellPathGeometry()
+                ->clippedPointSubset( parentWellPath->wellPathGeometry()->measuredDepths().front(), parentWellMD );
         if ( pointVector.size() < 2u ) return;
 
         newModeledWellPath->geometryDefinition()->setIsAttachedToParentWell( true );
@@ -86,61 +86,8 @@ void RicNewWellPathLateralAtDepthFeature::onActionTriggered( bool isChecked )
         newModeledWellPath->geometryDefinition()->setFixedWellPathPoints( pointVector );
         newModeledWellPath->geometryDefinition()->setFixedMeasuredDepths( measuredDepths );
 
-        {
-            QString nameOfNewWell;
-
-            {
-                auto topLevelWell = parentwWellPath->topLevelWellPath();
-
-                QStringList allNames;
-                {
-                    RimProject*                      proj      = RimProject::current();
-                    const std::vector<RimWellPath*>& wellPaths = proj->allWellPaths();
-
-                    for ( auto wellPath : wellPaths )
-                    {
-                        if ( wellPath )
-                        {
-                            auto currentTopLevelWell = wellPath->topLevelWellPath();
-                            if ( topLevelWell == currentTopLevelWell )
-                            {
-                                allNames.push_back( wellPath->name() );
-                            }
-                        }
-                    }
-                }
-
-                if ( allNames.size() == 1 )
-                {
-                    QString name = parentwWellPath->name();
-                    parentwWellPath->setName( name + " Y1" );
-                    nameOfNewWell = name + " Y2";
-                }
-                else
-                {
-                    QString commonRoot        = RiaTextStringTools::commonRoot( allNames );
-                    QString trimmedCommonRoot = RiaTextStringTools::trimNonAlphaNumericCharacters( commonRoot );
-
-                    int maxYValue = 0;
-                    for ( auto n : allNames )
-                    {
-                        auto suffix = n.replace( trimmedCommonRoot, "" );
-
-                        int candidate = suffix.toInt();
-                        maxYValue     = std::max( maxYValue, candidate );
-                    }
-
-                    if ( !trimmedCommonRoot.isEmpty() && trimmedCommonRoot.back() == "Y" )
-                    {
-                        trimmedCommonRoot = trimmedCommonRoot.left( trimmedCommonRoot.size() - 1 ).trimmed();
-                    }
-
-                    nameOfNewWell = QString( "%1 Y%2" ).arg( trimmedCommonRoot ).arg( maxYValue + 1 );
-                }
-            }
-
-            newModeledWellPath->setName( nameOfNewWell );
-        }
+        auto nameOfNewWell = updateNameOfParentAndFindNameOfSideStep( parentWellPath );
+        newModeledWellPath->setName( nameOfNewWell );
 
         {
             RimWellPathTarget* newTarget = newModeledWellPath->geometryDefinition()->appendTarget();
@@ -148,11 +95,11 @@ void RicNewWellPathLateralAtDepthFeature::onActionTriggered( bool isChecked )
             auto               tangent   = lastPoint - pointVector[pointVector.size() - 2];
             newTarget->setAsPointXYZAndTangentTarget( { lastPoint[0], lastPoint[1], lastPoint[2] }, tangent );
 
-            newModeledWellPath->connectWellPaths( parentwWellPath, parentWellMD );
+            newModeledWellPath->connectWellPaths( parentWellPath, parentWellMD );
         }
 
         newModeledWellPath->geometryDefinition()->enableTargetPointPicking( true );
-        newModeledWellPath->setUnitSystem( parentwWellPath->unitSystem() );
+        newModeledWellPath->setUnitSystem( parentWellPath->unitSystem() );
 
         newModeledWellPath->createWellPathGeometry();
 
@@ -186,4 +133,64 @@ RiuWellPathSelectionItem* RicNewWellPathLateralAtDepthFeature::wellPathSelection
     RiuWellPathSelectionItem* wellPathItem = dynamic_cast<RiuWellPathSelectionItem*>( selItem );
 
     return wellPathItem;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+QString RicNewWellPathLateralAtDepthFeature::updateNameOfParentAndFindNameOfSideStep( RimWellPath* parentwWellPath )
+{
+    if ( !parentwWellPath ) return "";
+
+    QString nameOfNewWell;
+
+    auto topLevelWell = parentwWellPath->topLevelWellPath();
+
+    QStringList allNames;
+    {
+        RimProject*                      proj      = RimProject::current();
+        const std::vector<RimWellPath*>& wellPaths = proj->allWellPaths();
+
+        for ( auto wellPath : wellPaths )
+        {
+            if ( wellPath )
+            {
+                auto currentTopLevelWell = wellPath->topLevelWellPath();
+                if ( topLevelWell == currentTopLevelWell )
+                {
+                    allNames.push_back( wellPath->name() );
+                }
+            }
+        }
+    }
+
+    if ( allNames.size() == 1 )
+    {
+        QString name = parentwWellPath->name();
+        parentwWellPath->setName( name + " Y1" );
+        nameOfNewWell = name + " Y2";
+    }
+    else
+    {
+        QString commonRoot        = RiaTextStringTools::commonRoot( allNames );
+        QString trimmedCommonRoot = RiaTextStringTools::trimNonAlphaNumericCharacters( commonRoot );
+
+        int maxYValue = 0;
+        for ( auto n : allNames )
+        {
+            auto suffix = n.replace( trimmedCommonRoot, "" );
+
+            int candidate = suffix.toInt();
+            maxYValue     = std::max( maxYValue, candidate );
+        }
+
+        if ( !trimmedCommonRoot.isEmpty() && trimmedCommonRoot.back() == "Y" )
+        {
+            trimmedCommonRoot = trimmedCommonRoot.left( trimmedCommonRoot.size() - 1 ).trimmed();
+        }
+
+        nameOfNewWell = QString( "%1 Y%2" ).arg( trimmedCommonRoot ).arg( maxYValue + 1 );
+    }
+
+    return nameOfNewWell;
 }
