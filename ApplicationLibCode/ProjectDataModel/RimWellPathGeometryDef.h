@@ -55,6 +55,7 @@ public:
     double mdAtFirstTarget() const;
     void   setMdAtFirstTarget( double mdrkb );
 
+    void setIsAttachedToParentWell( bool isAttached );
     void setFixedWellPathPoints( const std::vector<cvf::Vec3d>& points );
     void setFixedMeasuredDepths( const std::vector<double>& mds );
 
@@ -115,6 +116,8 @@ private:
     caf::PdmField<bool>                         m_pickPointsEnabled;
     caf::PdmField<std::vector<cvf::Vec3d>>      m_fixedWellPathPoints;
     caf::PdmField<std::vector<double>>          m_fixedMeasuredDepths;
+
+    caf::PdmField<bool> m_isAttachedToParentWell;
 
     std::shared_ptr<RicCreateWellTargetsPickEventHandler> m_pickTargetsEventHandler;
 };

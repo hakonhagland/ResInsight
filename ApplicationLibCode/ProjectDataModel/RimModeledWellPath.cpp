@@ -257,28 +257,40 @@ void RimModeledWellPath::updateGeometry( bool fullUpdate )
 //--------------------------------------------------------------------------------------------------
 void RimModeledWellPath::updateTieInLocationFromParentWell()
 {
+    RimWellPath* parentWellPath = nullptr;
+
     RimWellPathTieIn* tieIn = wellPathTieIn();
-    if ( !tieIn ) return;
-
-    RimWellPath* parentWellPath = tieIn->parentWell();
-    if ( !parentWellPath ) return;
-
-    auto targets = m_geometryDefinition->activeWellTargets();
-    if ( !targets.empty() )
+    if ( tieIn )
     {
-        auto [pointVector, measuredDepths] =
-            parentWellPath->wellPathGeometry()->clippedPointSubset( parentWellPath->wellPathGeometry()->measuredDepths().front(),
-                                                                    tieIn->tieInMeasuredDepth() );
+        parentWellPath = tieIn->parentWell();
 
-        if ( pointVector.size() < 2u ) return;
+        auto targets = m_geometryDefinition->activeWellTargets();
+        if ( parentWellPath && !targets.empty() )
+        {
+            auto [pointVector, measuredDepths] =
+                parentWellPath->wellPathGeometry()
+                    ->clippedPointSubset( parentWellPath->wellPathGeometry()->measuredDepths().front(),
+                                          tieIn->tieInMeasuredDepth() );
 
-        auto firstTarget = targets.front();
-        firstTarget->setPointXYZ( pointVector.back() );
+            if ( pointVector.size() > 2u )
+            {
+                auto firstTarget = targets.front();
+                firstTarget->setPointXYZ( pointVector.back() );
 
-        m_geometryDefinition->setMdAtFirstTarget( measuredDepths.back() );
-        m_geometryDefinition->setFixedWellPathPoints( pointVector );
-        m_geometryDefinition->setFixedMeasuredDepths( measuredDepths );
+                m_geometryDefinition->setIsAttachedToParentWell( true );
+                m_geometryDefinition->setMdAtFirstTarget( measuredDepths.back() );
+                m_geometryDefinition->setFixedWellPathPoints( pointVector );
+                m_geometryDefinition->setFixedMeasuredDepths( measuredDepths );
 
-        updateGeometry( true );
+                updateGeometry( true );
+            }
+        }
+    }
+
+    if ( !parentWellPath )
+    {
+        m_geometryDefinition->setIsAttachedToParentWell( false );
+        m_geometryDefinition->setFixedWellPathPoints( {} );
+        m_geometryDefinition->setFixedMeasuredDepths( {} );
     }
 }
