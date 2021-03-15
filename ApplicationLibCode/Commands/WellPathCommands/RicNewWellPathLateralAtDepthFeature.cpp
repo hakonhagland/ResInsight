@@ -197,7 +197,7 @@ QString RicNewWellPathLateralAtDepthFeature::updateNameOfParentAndFindNameOfSide
             maxYValue     = std::max( maxYValue, candidate );
         }
 
-        if ( !trimmedCommonRoot.isEmpty() && trimmedCommonRoot.back() == "Y" )
+        if ( !trimmedCommonRoot.isEmpty() && trimmedCommonRoot.endsWith( "Y" ) )
         {
             trimmedCommonRoot = trimmedCommonRoot.left( trimmedCommonRoot.size() - 1 ).trimmed();
         }
