@@ -154,6 +154,9 @@ void RimWellPathTieIn::defineUiOrdering( QString uiConfigName, caf::PdmUiOrderin
     tieInGroup->add( &m_tieInMeasuredDepth );
     tieInGroup->add( &m_addValveAtConnection );
 
+    // Display only ICV valves
+    m_valve->setComponentTypeFilter( { RiaDefines::WellPathComponentType::ICV } );
+
     if ( m_addValveAtConnection )
     {
         m_valve->uiOrdering( "TemplateOnly", *tieInGroup );
