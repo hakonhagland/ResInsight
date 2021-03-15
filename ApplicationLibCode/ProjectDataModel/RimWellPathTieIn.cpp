@@ -112,14 +112,14 @@ const RimWellPathValve* RimWellPathTieIn::outletValve() const
 //--------------------------------------------------------------------------------------------------
 void RimWellPathTieIn::defineUiOrdering( QString uiConfigName, caf::PdmUiOrdering& uiOrdering )
 {
-    uiOrdering.add( &m_parentWell );
-    uiOrdering.add( &m_tieInMeasuredDepth );
+    auto tieInGroup = uiOrdering.addNewGroup( "Tie In Settings" );
+    tieInGroup->add( &m_parentWell );
+    tieInGroup->add( &m_tieInMeasuredDepth );
+    tieInGroup->add( &m_addValveAtConnection );
 
-    auto valveGroup = uiOrdering.addNewGroup( "Valve Settings" );
-    valveGroup->add( &m_addValveAtConnection );
     if ( m_addValveAtConnection )
     {
-        m_valve->uiOrdering( "TemplateOnly", *valveGroup );
+        m_valve->uiOrdering( "TemplateOnly", *tieInGroup );
     }
 
     uiOrdering.skipRemainingFields();

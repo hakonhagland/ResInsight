@@ -1049,47 +1049,63 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
     exportInfo->setHasSubGridIntersections( exportInfo->hasSubGridIntersections() || foundSubGridIntersections );
     exportInfo->mainBoreBranch()->sortSegments();
 
-    /*
-        if ( auto wellPathGroup = dynamic_cast<const RimWellPathGroup*>( wellPath ); wellPathGroup != nullptr )
+    std::vector<RimModeledWellPath*> childPaths;
+    {
+        auto wellPaths = RimProject::current()->allWellPaths();
+        for ( auto w : wellPaths )
         {
-            auto initialChildMD  = wellPathGroup->uniqueEndMD();
-            auto initialChildTVD = tvdFromMeasuredDepth( wellPathGroup, initialMD );
-            for ( auto childWellPath : wellPathGroup->childWellPaths() )
+            auto modelWellPath = dynamic_cast<RimModeledWellPath*>( w );
+            if ( modelWellPath && modelWellPath->wellPathTieIn() && modelWellPath->wellPathTieIn()->parentWell() == wellPath )
             {
-                auto childCellIntersections =
-                    generateCellSegments( caseToApply, childWellPath, mswParameters, &initialChildMD );
-                auto childBranch =
-                    std::make_unique<RicMswBranch>( childWellPath->name(), childWellPath, initialChildMD,
-       initialChildTVD );
-
-                if ( wellPathGroup->outletValve() )
-                {
-                    childBranch       = RicMswValve::createExportValve( QString( "%1 valve for %2" )
-                                                                      .arg(
-       wellPathGroup->outletValve()->componentLabel() ) .arg( childWellPath->name() ), childWellPath, initialChildMD,
-                                                                  initialChildTVD,
-                                                                  wellPathGroup->outletValve() );
-                    auto dummySegment = std::make_unique<
-                        RicMswSegment>( QString( "%1 segment" ).arg( wellPathGroup->outletValve()->componentLabel() ),
-                                        initialChildMD,
-                                        initialChildMD + 0.1,
-                                        initialChildTVD,
-                                        RicWellPathExportMswCompletionsImpl::tvdFromMeasuredDepth( wellPath,
-                                                                                                   initialChildMD + 0.1
-       ) ); childBranch->addSegment( std::move( dummySegment ) );
-                }
-
-                generateFishbonesMswExportInfo( caseToApply,
-                                                childWellPath,
-                                                initialChildMD,
-                                                childCellIntersections,
-                                                enableSegmentSplitting,
-                                                exportInfo,
-                                                childBranch.get() );
-                branch->addChildBranch( std::move( childBranch ) );
+                childPaths.push_back( modelWellPath );
             }
         }
-    */
+    }
+
+    for ( auto childWellPath : childPaths )
+    {
+        auto initialChildMD  = childWellPath->wellPathTieIn()->tieInMeasuredDepth();
+        auto initialChildTVD = -childWellPath->wellPathGeometry()->interpolatedPointAlongWellPath( initialChildMD ).z();
+
+        auto mswParameters = childWellPath->perforationIntervalCollection()->mswParameters();
+
+        double startOfChildMD       = 0.0; // this is currently not used, as the tie-in MD is used
+        auto childCellIntersections = generateCellSegments( caseToApply, childWellPath, mswParameters, &startOfChildMD );
+        auto childBranch =
+            std::make_unique<RicMswBranch>( childWellPath->name(), childWellPath, initialChildMD, initialChildTVD );
+
+        const RimWellPathValve* outletValve = childWellPath->wellPathTieIn()->outletValve();
+        if ( outletValve )
+        {
+            // Is it correct to create export valve directly here? The original branch is deleted
+            childBranch = RicMswValve::createExportValve( QString( "%1 valve for %2" )
+                                                              .arg( outletValve->componentLabel() )
+                                                              .arg( childWellPath->name() ),
+                                                          childWellPath,
+                                                          initialChildMD,
+                                                          initialChildTVD,
+                                                          outletValve );
+            auto dummySegment =
+                std::make_unique<RicMswSegment>( QString( "%1 segment" ).arg( outletValve->componentLabel() ),
+                                                 initialChildMD,
+                                                 initialChildMD + 0.1,
+                                                 initialChildTVD,
+                                                 RicWellPathExportMswCompletionsImpl::tvdFromMeasuredDepth( wellPath,
+                                                                                                            initialChildMD +
+                                                                                                                0.1 ) );
+            childBranch->addSegment( std::move( dummySegment ) );
+        }
+
+        generateFishbonesMswExportInfo( caseToApply,
+                                        childWellPath,
+                                        initialChildMD,
+                                        childCellIntersections,
+                                        enableSegmentSplitting,
+                                        exportInfo,
+                                        childBranch.get() );
+
+        branch->addChildBranch( std::move( childBranch ) );
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
