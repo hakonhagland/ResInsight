@@ -1064,8 +1064,6 @@ bool RimWellPath::isMultiLateralWellPath() const
 //--------------------------------------------------------------------------------------------------
 const RimWellPath* RimWellPath::topLevelWellPath() const
 {
-    RimWellPath* parent = nullptr;
-
     if ( m_wellPathTieIn() && m_wellPathTieIn->parentWell() )
     {
         return m_wellPathTieIn()->parentWell()->topLevelWellPath();
