@@ -84,7 +84,7 @@ public:
                                                    int                    timeStep,
                                                    bool                   exportDataSourceAsComment );
 
-    static void generateFishbonesMswExportInfo( const RimEclipseCase*                            caseToApply,
+    static void generateFishbonesMswExportInfo( const RimEclipseCase*                            eclipseCase,
                                                 const RimWellPath*                               wellPath,
                                                 double                                           initialMD,
                                                 const std::vector<WellPathCellIntersectionInfo>& cellIntersections,
@@ -93,7 +93,7 @@ public:
                                                 gsl::not_null<RicMswBranch*>                     branch );
 
 private:
-    static void generateFishbonesMswExportInfo( const RimEclipseCase*                            caseToApply,
+    static void generateFishbonesMswExportInfo( const RimEclipseCase*                            eclipseCase,
                                                 const RimWellPath*                               wellPath,
                                                 double                                           initialMD,
                                                 const std::vector<WellPathCellIntersectionInfo>& cellIntersections,
@@ -102,11 +102,12 @@ private:
                                                 gsl::not_null<RicMswExportInfo*>                 exportInfo,
                                                 gsl::not_null<RicMswBranch*>                     branch );
 
-    static RicMswExportInfo generateFracturesMswExportInfo( RimEclipseCase* caseToApply, const RimWellPath* wellPath );
-
-    static RicMswExportInfo generateFracturesMswExportInfo( RimEclipseCase*                          caseToApply,
-                                                            const RimWellPath*                       wellPath,
-                                                            const std::vector<RimWellPathFracture*>& fractures );
+    static bool generateFracturesMswExportInfo( RimEclipseCase*                                  eclipseCase,
+                                                const RimWellPath*                               wellPath,
+                                                double                                           initialMD,
+                                                const std::vector<WellPathCellIntersectionInfo>& cellIntersections,
+                                                gsl::not_null<RicMswExportInfo*>                 exportInfo,
+                                                gsl::not_null<RicMswBranch*>                     branch );
 
     static bool generatePerforationsMswExportInfo( RimEclipseCase*                                  eclipseCase,
                                                    const RimWellPath*                               wellPath,
@@ -181,7 +182,6 @@ private:
                                          const std::vector<WellPathCellIntersectionInfo>& wellPathIntersections,
                                          const RigActiveCellInfo*                         activeCellInfo );
 
-private:
     static std::vector<std::pair<double, double>>
         createSubSegmentMDPairs( double startMD, double endMD, double maxSegmentLength );
 
@@ -211,14 +211,14 @@ private:
 
     static void moveIntersectionsToSuperICDsOrAICDs( gsl::not_null<RicMswBranch*> branch );
 
-    static void assignFishbonesLateralIntersections( const RimEclipseCase*         caseToApply,
+    static void assignFishbonesLateralIntersections( const RimEclipseCase*         eclipseCase,
                                                      const RimWellPath*            wellPath,
                                                      const RimFishbones*           fishbonesSubs,
                                                      gsl::not_null<RicMswSegment*> segment,
                                                      bool*                         foundSubGridIntersections,
                                                      double                        maxSegmentLength );
 
-    static void assignFractureCompletionsToCellSegment( const RimEclipseCase*                 caseToApply,
+    static void assignFractureCompletionsToCellSegment( const RimEclipseCase*                 eclipseCase,
                                                         const RimWellPath*                    wellPath,
                                                         const RimWellPathFracture*            fracture,
                                                         const std::vector<RigCompletionData>& completionData,
@@ -238,14 +238,14 @@ private:
                                                 double                                overlapEnd,
                                                 bool*                                 foundSubGridIntersections );
 
-    static void assignBranchNumbersToPerforations( const RimEclipseCase*         caseToApply,
+    static void assignBranchNumbersToPerforations( const RimEclipseCase*         eclipseCase,
                                                    gsl::not_null<RicMswSegment*> segment,
                                                    gsl::not_null<int*>           branchNumber );
-    static void assignBranchNumbersToOtherCompletions( const RimEclipseCase*         caseToApply,
+    static void assignBranchNumbersToOtherCompletions( const RimEclipseCase*         eclipseCase,
                                                        gsl::not_null<RicMswSegment*> segment,
                                                        gsl::not_null<int*>           branchNumber );
 
-    static void assignBranchNumbersToBranch( const RimEclipseCase*        caseToApply,
+    static void assignBranchNumbersToBranch( const RimEclipseCase*        eclipseCase,
                                              RicMswExportInfo*            exportInfo,
                                              gsl::not_null<RicMswBranch*> branch,
                                              gsl::not_null<int*>          branchNumber );
