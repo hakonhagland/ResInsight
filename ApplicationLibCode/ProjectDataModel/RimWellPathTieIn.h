@@ -40,6 +40,8 @@ public:
     RimWellPath* childWell() const;
     void         updateChildWellGeometry();
 
+    void updateFirstTargetFromParentWell();
+
     const RimWellPathValve* outletValve() const;
 
 private:

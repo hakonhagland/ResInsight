@@ -18,10 +18,14 @@
 
 #include "RimWellPathTieIn.h"
 
+#include "RigWellPath.h"
+
 #include "RimModeledWellPath.h"
 #include "RimTools.h"
+#include "RimWellPathGeometryDef.h"
 #include "RimWellPathValve.h"
 
+#include "RimWellPathTarget.h"
 #include "cafPdmFieldScriptingCapability.h"
 #include "cafPdmObjectScriptingCapability.h"
 #include "cafPdmUiDoubleValueEditor.h"
@@ -102,6 +106,39 @@ void RimWellPathTieIn::updateChildWellGeometry()
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+void RimWellPathTieIn::updateFirstTargetFromParentWell()
+{
+    auto parentWellPath = m_parentWell();
+    if ( !parentWellPath ) return;
+
+    auto modeledWellPath = dynamic_cast<RimModeledWellPath*>( m_childWell() );
+    if ( modeledWellPath && modeledWellPath->geometryDefinition() )
+    {
+        auto [pointVector, measuredDepths] =
+            parentWellPath->wellPathGeometry()
+                ->clippedPointSubset( parentWellPath->wellPathGeometry()->measuredDepths().front(), m_tieInMeasuredDepth );
+        if ( pointVector.size() < 2u ) return;
+
+        RimWellPathTarget* newTarget = nullptr;
+
+        if ( modeledWellPath->geometryDefinition()->activeWellTargets().empty() )
+        {
+            newTarget = modeledWellPath->geometryDefinition()->appendTarget();
+        }
+        else
+        {
+            newTarget = modeledWellPath->geometryDefinition()->activeWellTargets().front();
+        }
+
+        auto lastPoint = pointVector.back();
+        auto tangent   = lastPoint - pointVector[pointVector.size() - 2];
+        newTarget->setAsPointXYZAndTangentTarget( { lastPoint[0], lastPoint[1], lastPoint[2] }, tangent );
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 const RimWellPathValve* RimWellPathTieIn::outletValve() const
 {
     return m_addValveAtConnection() && m_valve() && m_valve->valveTemplate() ? m_valve() : nullptr;
@@ -132,6 +169,11 @@ void RimWellPathTieIn::fieldChangedByUi( const caf::PdmFieldHandle* changedField
                                          const QVariant&            oldValue,
                                          const QVariant&            newValue )
 {
+    if ( changedField == &m_parentWell )
+    {
+        updateFirstTargetFromParentWell();
+    }
+
     updateChildWellGeometry();
 }
 

@@ -1121,4 +1121,5 @@ void RimWellPath::connectWellPaths( RimWellPath* parentWell, double parentTieInM
     if ( !m_wellPathTieIn() ) m_wellPathTieIn = new RimWellPathTieIn;
 
     m_wellPathTieIn->connectWellPaths( parentWell, this, parentTieInMeasuredDepth );
+    m_wellPathTieIn->updateFirstTargetFromParentWell();
 }

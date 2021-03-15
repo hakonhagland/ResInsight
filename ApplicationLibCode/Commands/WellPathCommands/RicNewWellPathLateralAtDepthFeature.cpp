@@ -88,15 +88,7 @@ void RicNewWellPathLateralAtDepthFeature::onActionTriggered( bool isChecked )
 
         auto nameOfNewWell = updateNameOfParentAndFindNameOfSideStep( parentWellPath );
         newModeledWellPath->setName( nameOfNewWell );
-
-        {
-            RimWellPathTarget* newTarget = newModeledWellPath->geometryDefinition()->appendTarget();
-            auto               lastPoint = pointVector.back();
-            auto               tangent   = lastPoint - pointVector[pointVector.size() - 2];
-            newTarget->setAsPointXYZAndTangentTarget( { lastPoint[0], lastPoint[1], lastPoint[2] }, tangent );
-
-            newModeledWellPath->connectWellPaths( parentWellPath, parentWellMD );
-        }
+        newModeledWellPath->connectWellPaths( parentWellPath, parentWellMD );
 
         newModeledWellPath->geometryDefinition()->enableTargetPointPicking( true );
         newModeledWellPath->setUnitSystem( parentWellPath->unitSystem() );
