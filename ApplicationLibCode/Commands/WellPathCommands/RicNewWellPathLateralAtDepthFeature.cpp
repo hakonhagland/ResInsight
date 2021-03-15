@@ -167,13 +167,26 @@ QString RicNewWellPathLateralAtDepthFeature::updateNameOfParentAndFindNameOfSide
     if ( allNames.size() == 1 )
     {
         QString name = parentwWellPath->name();
-        parentwWellPath->setName( name + " Y1" );
-        nameOfNewWell = name + " Y2";
+
+        if ( name.contains( "Y1" ) )
+        {
+            nameOfNewWell = name.replace( "Y1", "Y2" );
+        }
+        else
+        {
+            parentwWellPath->setNameNoUpdateOfExportName( name + " Y1" );
+            nameOfNewWell = name + " Y2";
+        }
+
+        return nameOfNewWell;
     }
-    else
+
     {
         QString commonRoot        = RiaTextStringTools::commonRoot( allNames );
         QString trimmedCommonRoot = RiaTextStringTools::trimNonAlphaNumericCharacters( commonRoot );
+
+        // Remove side step prefix
+        trimmedCommonRoot.replace( " Y", "" );
 
         int maxYValue = 0;
         for ( auto n : allNames )

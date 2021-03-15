@@ -154,10 +154,11 @@ public:
     void onChildDeleted( caf::PdmChildArrayFieldHandle*      childArray,
                          std::vector<caf::PdmObjectHandle*>& referringObjects ) override;
 
-    bool               isTopLevelWellPath() const;
-    bool               isMultiLateralWellPath() const;
-    const RimWellPath* topLevelWellPath() const;
-    void               updateAfterAddingToWellPathGroup();
+    bool                      isTopLevelWellPath() const;
+    bool                      isMultiLateralWellPath() const;
+    const RimWellPath*        topLevelWellPath() const;
+    void                      updateAfterAddingToWellPathGroup();
+    std::vector<RimWellPath*> allTieInWellsRecursively() const;
 
     RimWellPathTieIn* wellPathTieIn() const;
     void              connectWellPaths( RimWellPath* childWell, double tieInMeasuredDepth );

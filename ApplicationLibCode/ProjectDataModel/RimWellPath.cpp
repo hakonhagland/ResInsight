@@ -969,12 +969,18 @@ std::vector<const RimWellPathComponentInterface*> RimWellPath::allCompletionsRec
 {
     std::vector<const RimWellPathComponentInterface*> allCompletions;
 
-    std::vector<const RimWellPathCompletions*> completionCollections;
-    this->descendantsOfType( completionCollections );
-    for ( auto collection : completionCollections )
+    auto tieInWells = allTieInWellsRecursively();
+    tieInWells.push_back( const_cast<RimWellPath*>( this ) );
+
+    for ( auto w : tieInWells )
     {
-        std::vector<const RimWellPathComponentInterface*> completions = collection->allCompletions();
-        allCompletions.insert( allCompletions.end(), completions.begin(), completions.end() );
+        std::vector<const RimWellPathCompletions*> completionCollections;
+        w->descendantsOfType( completionCollections );
+        for ( auto collection : completionCollections )
+        {
+            std::vector<const RimWellPathComponentInterface*> completions = collection->allCompletions();
+            allCompletions.insert( allCompletions.end(), completions.begin(), completions.end() );
+        }
     }
 
     return allCompletions;
@@ -1073,6 +1079,30 @@ const RimWellPath* RimWellPath::topLevelWellPath() const
 //--------------------------------------------------------------------------------------------------
 void RimWellPath::updateAfterAddingToWellPathGroup()
 {
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+std::vector<RimWellPath*> RimWellPath::allTieInWellsRecursively() const
+{
+    std::vector<RimWellPath*> tieInWells;
+
+    auto wellPathColl = RimTools::wellPathCollection();
+    if ( wellPathColl )
+    {
+        wellPathColl->allWellPaths();
+
+        for ( auto w : wellPathColl->allWellPaths() )
+        {
+            if ( w->topLevelWellPath() == this )
+            {
+                tieInWells.push_back( w );
+            }
+        }
+    }
+
+    return tieInWells;
 }
 
 //--------------------------------------------------------------------------------------------------
