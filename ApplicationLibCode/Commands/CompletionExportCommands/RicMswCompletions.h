@@ -111,11 +111,11 @@ public:
     bool isValid() const;
     void setIsValid( bool valid );
 
-    static std::unique_ptr<RicMswValve> createExportValve( const QString&          label,
-                                                           const RimWellPath*      wellPath,
-                                                           double                  startMD,
-                                                           double                  startTVD,
-                                                           const RimWellPathValve* wellPathValve );
+    static std::unique_ptr<RicMswValve> createTieInValve( const QString&          label,
+                                                          const RimWellPath*      wellPath,
+                                                          double                  startMD,
+                                                          double                  startTVD,
+                                                          const RimWellPathValve* wellPathValve );
 
 private:
     bool                    m_valid;
@@ -183,6 +183,20 @@ public:
                           double                  startMD,
                           double                  startTVD,
                           const RimWellPathValve* wellPathValve );
+    RigCompletionData::CompletionType completionType() const override;
+};
+
+//==================================================================================================
+///
+//==================================================================================================
+class RicMswTieInICV : public RicMswWsegValve
+{
+public:
+    RicMswTieInICV( const QString&          label,
+                    const RimWellPath*      wellPath,
+                    double                  startMD,
+                    double                  startTVD,
+                    const RimWellPathValve* wellPathValve );
     RigCompletionData::CompletionType completionType() const override;
 };
 

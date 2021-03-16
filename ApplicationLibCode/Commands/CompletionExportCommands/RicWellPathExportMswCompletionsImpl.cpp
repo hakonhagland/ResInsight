@@ -371,6 +371,7 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
     gsl::not_null<RicMswBranch*>                     branch )
 {
     std::vector<RimFishbones*> fishbonesSubs = wellPath->fishbonesCollection()->activeFishbonesSubs();
+    if ( fishbonesSubs.empty() ) return;
 
     generateFishbonesMswExportInfo( eclipseCase,
                                     wellPath,
@@ -505,22 +506,26 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
         const RimWellPathValve* outletValve = childWellPath->wellPathTieIn()->outletValve();
         if ( outletValve )
         {
-            // Is it correct to create export valve directly here? The original branch is deleted
-            childBranch = RicMswValve::createExportValve( QString( "%1 valve for %2" )
-                                                              .arg( outletValve->componentLabel() )
-                                                              .arg( childWellPath->name() ),
-                                                          childWellPath,
-                                                          initialChildMD,
-                                                          initialChildTVD,
-                                                          outletValve );
-            auto dummySegment =
-                std::make_unique<RicMswSegment>( QString( "%1 segment" ).arg( outletValve->componentLabel() ),
-                                                 initialChildMD,
-                                                 initialChildMD + 0.1,
-                                                 initialChildTVD,
-                                                 RicMswTableFormatterTools::tvdFromMeasuredDepth( wellPath,
-                                                                                                  initialChildMD + 0.1 ) );
-            childBranch->addSegment( std::move( dummySegment ) );
+            auto childBranchCandidate = RicMswValve::createTieInValve( QString( "%1 valve for %2" )
+                                                                           .arg( outletValve->componentLabel() )
+                                                                           .arg( childWellPath->name() ),
+                                                                       childWellPath,
+                                                                       initialChildMD,
+                                                                       initialChildTVD,
+                                                                       outletValve );
+            if ( childBranchCandidate )
+            {
+                childBranch = std::move( childBranchCandidate );
+                auto dummySegment =
+                    std::make_unique<RicMswSegment>( QString( "%1 segment" ).arg( outletValve->componentLabel() ),
+                                                     initialChildMD,
+                                                     initialChildMD + 0.1,
+                                                     initialChildTVD,
+                                                     RicMswTableFormatterTools::tvdFromMeasuredDepth( wellPath,
+                                                                                                      initialChildMD +
+                                                                                                          0.1 ) );
+                childBranch->addSegment( std::move( dummySegment ) );
+            }
         }
 
         generateFishbonesMswExportInfo( eclipseCase,
@@ -640,22 +645,26 @@ bool RicWellPathExportMswCompletionsImpl::generateFracturesMswExportInfo(
         const RimWellPathValve* outletValve = childWellPath->wellPathTieIn()->outletValve();
         if ( outletValve )
         {
-            // Is it correct to create export valve directly here? The original branch is deleted
-            childBranch = RicMswValve::createExportValve( QString( "%1 valve for %2" )
-                                                              .arg( outletValve->componentLabel() )
-                                                              .arg( childWellPath->name() ),
-                                                          childWellPath,
-                                                          initialChildMD,
-                                                          initialChildTVD,
-                                                          outletValve );
-            auto dummySegment =
-                std::make_unique<RicMswSegment>( QString( "%1 segment" ).arg( outletValve->componentLabel() ),
-                                                 initialChildMD,
-                                                 initialChildMD + 0.1,
-                                                 initialChildTVD,
-                                                 RicMswTableFormatterTools::tvdFromMeasuredDepth( wellPath,
-                                                                                                  initialChildMD + 0.1 ) );
-            childBranch->addSegment( std::move( dummySegment ) );
+            auto childBranchCandidate = RicMswValve::createTieInValve( QString( "%1 valve for %2" )
+                                                                           .arg( outletValve->componentLabel() )
+                                                                           .arg( childWellPath->name() ),
+                                                                       childWellPath,
+                                                                       initialChildMD,
+                                                                       initialChildTVD,
+                                                                       outletValve );
+            if ( childBranchCandidate )
+            {
+                childBranch = std::move( childBranchCandidate );
+                auto dummySegment =
+                    std::make_unique<RicMswSegment>( QString( "%1 segment" ).arg( outletValve->componentLabel() ),
+                                                     initialChildMD,
+                                                     initialChildMD + 0.1,
+                                                     initialChildTVD,
+                                                     RicMswTableFormatterTools::tvdFromMeasuredDepth( wellPath,
+                                                                                                      initialChildMD +
+                                                                                                          0.1 ) );
+                childBranch->addSegment( std::move( dummySegment ) );
+            }
         }
 
         if ( generateFracturesMswExportInfo( eclipseCase,
@@ -773,22 +782,27 @@ bool RicWellPathExportMswCompletionsImpl::generatePerforationsMswExportInfo(
         const RimWellPathValve* outletValve = childWellPath->wellPathTieIn()->outletValve();
         if ( outletValve )
         {
-            // Is it correct to create export valve directly here? The original branch is deleted
-            childBranch = RicMswValve::createExportValve( QString( "%1 valve for %2" )
-                                                              .arg( outletValve->componentLabel() )
-                                                              .arg( childWellPath->name() ),
-                                                          childWellPath,
-                                                          initialChildMD,
-                                                          initialChildTVD,
-                                                          outletValve );
-            auto dummySegment =
-                std::make_unique<RicMswSegment>( QString( "%1 segment" ).arg( outletValve->componentLabel() ),
-                                                 initialChildMD,
-                                                 initialChildMD + 0.1,
-                                                 initialChildTVD,
-                                                 RicMswTableFormatterTools::tvdFromMeasuredDepth( wellPath,
-                                                                                                  initialChildMD + 0.1 ) );
-            childBranch->addSegment( std::move( dummySegment ) );
+            auto childBranchCandidate = RicMswValve::createTieInValve( QString( "%1 valve for %2" )
+                                                                           .arg( outletValve->componentLabel() )
+                                                                           .arg( childWellPath->name() ),
+                                                                       childWellPath,
+                                                                       initialChildMD,
+                                                                       initialChildTVD,
+                                                                       outletValve );
+            if ( childBranchCandidate )
+            {
+                childBranch = std::move( childBranchCandidate );
+
+                auto dummySegment =
+                    std::make_unique<RicMswSegment>( QString( "%1 segment" ).arg( outletValve->componentLabel() ),
+                                                     initialChildMD,
+                                                     initialChildMD + 0.1,
+                                                     initialChildTVD,
+                                                     RicMswTableFormatterTools::tvdFromMeasuredDepth( wellPath,
+                                                                                                      initialChildMD +
+                                                                                                          0.1 ) );
+                childBranch->addSegment( std::move( dummySegment ) );
+            }
         }
 
         if ( generatePerforationsMswExportInfo( eclipseCase,

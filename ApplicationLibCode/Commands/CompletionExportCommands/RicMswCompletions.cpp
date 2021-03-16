@@ -20,6 +20,7 @@
 
 #include "RicMswSegmentCellIntersection.h"
 
+#include "RiaLogging.h"
 #include "RimWellPath.h"
 #include "RimWellPathValve.h"
 
@@ -125,30 +126,22 @@ void RicMswValve::setIsValid( bool valid )
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-std::unique_ptr<RicMswValve> RicMswValve::createExportValve( const QString&          label,
-                                                             const RimWellPath*      wellPath,
-                                                             double                  startMD,
-                                                             double                  startTVD,
-                                                             const RimWellPathValve* wellPathValve )
+std::unique_ptr<RicMswValve> RicMswValve::createTieInValve( const QString&          label,
+                                                            const RimWellPath*      wellPath,
+                                                            double                  startMD,
+                                                            double                  startTVD,
+                                                            const RimWellPathValve* wellPathValve )
 {
-    std::unique_ptr<RicMswValve> outletValve;
-    if ( wellPathValve->componentType() == RiaDefines::WellPathComponentType::ICD )
+    if ( wellPathValve->componentType() != RiaDefines::WellPathComponentType::ICV )
     {
-        outletValve = std::make_unique<RicMswPerforationICD>( label, wellPath, startMD, startTVD, wellPathValve );
+        RiaLogging::error( "MSW export: The outlet valve must be of type ICV" );
+        return nullptr;
     }
-    else if ( wellPathValve->componentType() == RiaDefines::WellPathComponentType::ICV )
-    {
-        outletValve = std::make_unique<RicMswPerforationICV>( label, wellPath, startMD, startTVD, wellPathValve );
-    }
-    else if ( wellPathValve->componentType() == RiaDefines::WellPathComponentType::AICD )
-    {
-        outletValve = std::make_unique<RicMswPerforationAICD>( label, wellPath, startMD, startTVD, wellPathValve );
-    }
-    else
-    {
-        CAF_ASSERT( false && "Valve needs to be either an ICD, ICVF or AICD" );
-    }
-    return outletValve;
+
+    std::unique_ptr<RicMswTieInICV> tieInValve =
+        std::make_unique<RicMswTieInICV>( label, wellPath, startMD, startTVD, wellPathValve );
+
+    return tieInValve;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -348,4 +341,29 @@ const std::array<double, AICD_NUM_PARAMS>& RicMswPerforationAICD::values() const
 std::array<double, AICD_NUM_PARAMS>& RicMswPerforationAICD::values()
 {
     return m_parameters;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+RicMswTieInICV::RicMswTieInICV( const QString&          label,
+                                const RimWellPath*      wellPath,
+                                double                  startMD,
+                                double                  startTVD,
+                                const RimWellPathValve* wellPathValve )
+    : RicMswWsegValve( label, wellPath, startMD, startTVD, wellPathValve )
+{
+    setIsValid( true );
+
+    setFlowCoefficient( wellPathValve->flowCoefficient() );
+    double orificeRadius = wellPathValve->orificeDiameter( wellPath->unitSystem() ) / 2;
+    setArea( orificeRadius * orificeRadius * cvf::PI_D );
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+RigCompletionData::CompletionType RicMswTieInICV::completionType() const
+{
+    return RigCompletionData::PERFORATION_ICV;
 }

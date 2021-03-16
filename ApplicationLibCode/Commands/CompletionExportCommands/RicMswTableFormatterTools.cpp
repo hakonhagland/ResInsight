@@ -441,36 +441,29 @@ void RicMswTableFormatterTools::generateWsegvalvTable( RifTextDataTableFormatter
 //--------------------------------------------------------------------------------------------------
 void RicMswTableFormatterTools::generateWsegvalvTableRecursively( RifTextDataTableFormatter&   formatter,
                                                                   gsl::not_null<RicMswBranch*> branch,
-                                                                  bool&                        foundValve,
+                                                                  bool&                        isHeaderWritten,
                                                                   const QString&               wellNameForExport )
 {
     {
-        auto wsegValve = dynamic_cast<RicMswWsegValve*>( branch.get() );
-        if ( wsegValve && !wsegValve->segments().empty() )
+        auto tieInValve = dynamic_cast<RicMswTieInICV*>( branch.get() );
+        if ( tieInValve && !tieInValve->segments().empty() )
         {
-            if ( !foundValve )
+            if ( !isHeaderWritten )
             {
-                formatter.keyword( "WSEGVALV" );
-                std::vector<RifTextDataTableColumn> header = {
-                    RifTextDataTableColumn( "Well Name" ),
-                    RifTextDataTableColumn( "Seg No" ),
-                    RifTextDataTableColumn( "Cv" ),
-                    RifTextDataTableColumn( "Ac" ),
-                };
-                formatter.header( header );
+                writeWsegvalHeader( formatter );
 
-                foundValve = true;
+                isHeaderWritten = true;
             }
 
-            auto firstSubSegment = wsegValve->segments().front();
-            CAF_ASSERT( wsegValve->completionType() == RigCompletionData::PERFORATION_ICV );
+            auto firstSubSegment = tieInValve->segments().front();
+            CAF_ASSERT( tieInValve->completionType() == RigCompletionData::PERFORATION_ICV );
             {
-                formatter.addOptionalComment( wsegValve->label() );
+                formatter.addOptionalComment( tieInValve->label() );
             }
             formatter.add( wellNameForExport );
             formatter.add( firstSubSegment->segmentNumber() );
-            formatter.add( wsegValve->flowCoefficient() );
-            formatter.add( QString( "%1" ).arg( wsegValve->area(), 8, 'g', 4 ) );
+            formatter.add( tieInValve->flowCoefficient() );
+            formatter.add( QString( "%1" ).arg( tieInValve->area(), 8, 'g', 4 ) );
             formatter.rowCompleted();
         }
     }
@@ -481,18 +474,11 @@ void RicMswTableFormatterTools::generateWsegvalvTableRecursively( RifTextDataTab
         {
             if ( RigCompletionData::isWsegValveTypes( completion->completionType() ) )
             {
-                if ( !foundValve )
+                if ( !isHeaderWritten )
                 {
-                    formatter.keyword( "WSEGVALV" );
-                    std::vector<RifTextDataTableColumn> header = {
-                        RifTextDataTableColumn( "Well Name" ),
-                        RifTextDataTableColumn( "Seg No" ),
-                        RifTextDataTableColumn( "Cv" ),
-                        RifTextDataTableColumn( "Ac" ),
-                    };
-                    formatter.header( header );
+                    writeWsegvalHeader( formatter );
 
-                    foundValve = true;
+                    isHeaderWritten = true;
                 }
 
                 auto wsegValve = static_cast<RicMswWsegValve*>( completion );
@@ -521,7 +507,7 @@ void RicMswTableFormatterTools::generateWsegvalvTableRecursively( RifTextDataTab
 
     for ( auto childBranch : branch->branches() )
     {
-        generateWsegvalvTableRecursively( formatter, childBranch, foundValve, wellNameForExport );
+        generateWsegvalvTableRecursively( formatter, childBranch, isHeaderWritten, wellNameForExport );
     }
 }
 
@@ -896,4 +882,19 @@ double RicMswTableFormatterTools::tvdFromMeasuredDepth( gsl::not_null<const RimW
     double tvdValue = -wellPathGeometry->interpolatedPointAlongWellPath( measuredDepth ).z();
 
     return tvdValue;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RicMswTableFormatterTools::writeWsegvalHeader( RifTextDataTableFormatter& formatter )
+{
+    formatter.keyword( "WSEGVALV" );
+    std::vector<RifTextDataTableColumn> header = {
+        RifTextDataTableColumn( "Well Name" ),
+        RifTextDataTableColumn( "Seg No" ),
+        RifTextDataTableColumn( "Cv" ),
+        RifTextDataTableColumn( "Ac" ),
+    };
+    formatter.header( header );
 }

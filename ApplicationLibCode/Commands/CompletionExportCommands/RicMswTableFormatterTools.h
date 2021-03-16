@@ -98,7 +98,7 @@ void generateCompsegHeader( RifTextDataTableFormatter&        formatter,
 void generateWsegvalvTable( RifTextDataTableFormatter& formatter, RicMswExportInfo& exportInfo );
 void generateWsegvalvTableRecursively( RifTextDataTableFormatter&   formatter,
                                        gsl::not_null<RicMswBranch*> branch,
-                                       bool&                        foundValve,
+                                       bool&                        isHeaderWritten,
                                        const QString&               wellNameForExport );
 
 void generateWsegAicdTable( RifTextDataTableFormatter& formatter, RicMswExportInfo& exportInfo );
@@ -106,5 +106,7 @@ void generateWsegAicdTable( RifTextDataTableFormatter& formatter, RicMswExportIn
 std::vector<std::pair<double, double>> createSubSegmentMDPairs( double startMD, double endMD, double maxSegmentLength );
 
 double tvdFromMeasuredDepth( gsl::not_null<const RimWellPath*> wellPath, double measuredDepth );
+
+void writeWsegvalHeader( RifTextDataTableFormatter& formatter );
 
 } // namespace RicMswTableFormatterTools
