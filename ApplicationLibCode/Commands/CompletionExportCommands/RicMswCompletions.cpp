@@ -20,7 +20,9 @@
 
 #include "RicMswSegmentCellIntersection.h"
 
+#include "RimWellPath.h"
 #include "RimWellPathValve.h"
+
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
@@ -247,6 +249,10 @@ RicMswPerforationICV::RicMswPerforationICV( const QString&          label,
     : RicMswWsegValve( label, wellPath, startMD, startTVD, wellPathValve )
 {
     setIsValid( true );
+
+    setFlowCoefficient( wellPathValve->flowCoefficient() );
+    double orificeRadius = wellPathValve->orificeDiameter( wellPath->unitSystem() ) / 2;
+    setArea( orificeRadius * orificeRadius * cvf::PI_D );
 }
 
 //-------------------------------------------------------------------

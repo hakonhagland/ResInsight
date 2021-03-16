@@ -729,7 +729,57 @@ void RicWellPathExportMswCompletionsImpl::generateWsegvalvTable( RifTextDataTabl
 {
     bool foundValve = false;
 
-    for ( auto segment : exportInfo.mainBoreBranch()->segments() )
+    generateWsegvalvTableRecursively( formatter,
+                                      exportInfo.mainBoreBranch(),
+                                      foundValve,
+                                      exportInfo.mainBoreBranch()->wellPath()->completionSettings()->wellNameForExport() );
+
+    if ( foundValve )
+    {
+        formatter.tableCompleted();
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RicWellPathExportMswCompletionsImpl::generateWsegvalvTableRecursively( RifTextDataTableFormatter&   formatter,
+                                                                            gsl::not_null<RicMswBranch*> branch,
+                                                                            bool&                        foundValve,
+                                                                            const QString& wellNameForExport )
+{
+    {
+        auto wsegValve = dynamic_cast<RicMswWsegValve*>( branch.get() );
+        if ( wsegValve && !wsegValve->segments().empty() )
+        {
+            if ( !foundValve )
+            {
+                formatter.keyword( "WSEGVALV" );
+                std::vector<RifTextDataTableColumn> header = {
+                    RifTextDataTableColumn( "Well Name" ),
+                    RifTextDataTableColumn( "Seg No" ),
+                    RifTextDataTableColumn( "Cv" ),
+                    RifTextDataTableColumn( "Ac" ),
+                };
+                formatter.header( header );
+
+                foundValve = true;
+            }
+
+            auto firstSubSegment = wsegValve->segments().front();
+            CAF_ASSERT( wsegValve->completionType() == RigCompletionData::PERFORATION_ICV );
+            {
+                formatter.addOptionalComment( wsegValve->label() );
+            }
+            formatter.add( wellNameForExport );
+            formatter.add( firstSubSegment->segmentNumber() );
+            formatter.add( wsegValve->flowCoefficient() );
+            formatter.add( QString( "%1" ).arg( wsegValve->area(), 8, 'g', 4 ) );
+            formatter.rowCompleted();
+        }
+    }
+
+    for ( auto segment : branch->segments() )
     {
         for ( auto completion : segment->completions() )
         {
@@ -762,7 +812,7 @@ void RicWellPathExportMswCompletionsImpl::generateWsegvalvTable( RifTextDataTabl
                         {
                             formatter.addOptionalComment( wsegValve->label() );
                         }
-                        formatter.add( exportInfo.mainBoreBranch()->wellPath()->completionSettings()->wellNameForExport() );
+                        formatter.add( wellNameForExport );
                         formatter.add( firstSubSegment->segmentNumber() );
                         formatter.add( wsegValve->flowCoefficient() );
                         formatter.add( QString( "%1" ).arg( wsegValve->area(), 8, 'g', 4 ) );
@@ -772,9 +822,10 @@ void RicWellPathExportMswCompletionsImpl::generateWsegvalvTable( RifTextDataTabl
             }
         }
     }
-    if ( foundValve )
+
+    for ( auto childBranch : branch->branches() )
     {
-        formatter.tableCompleted();
+        generateWsegvalvTableRecursively( formatter, childBranch, foundValve, wellNameForExport );
     }
 }
 
@@ -1724,9 +1775,6 @@ void RicWellPathExportMswCompletionsImpl::createValveCompletions(
                                                                           exportStartTVD,
                                                                           valve );
                             ICV->addSegment( std::move( subSegment ) );
-                            ICV->setFlowCoefficient( valve->flowCoefficient() );
-                            double orificeRadius = valve->orificeDiameter( unitSystem ) / 2;
-                            ICV->setArea( orificeRadius * orificeRadius * cvf::PI_D );
                         }
                     }
                     else if ( overlap > 0.0 &&

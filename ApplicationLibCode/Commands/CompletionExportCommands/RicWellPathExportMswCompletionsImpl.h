@@ -173,7 +173,13 @@ private:
                                        RicMswExportInfo&                 exportInfo,
                                        RigCompletionData::CompletionType completionType,
                                        bool                              exportSubGridIntersections );
+
     static void generateWsegvalvTable( RifTextDataTableFormatter& formatter, RicMswExportInfo& exportInfo );
+    static void generateWsegvalvTableRecursively( RifTextDataTableFormatter&   formatter,
+                                                  gsl::not_null<RicMswBranch*> branch,
+                                                  bool&                        foundValve,
+                                                  const QString&               wellNameForExport );
+
     static void generateWsegAicdTable( RifTextDataTableFormatter& formatter, RicMswExportInfo& exportInfo );
 
     static std::pair<double, double>
