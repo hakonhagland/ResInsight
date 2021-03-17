@@ -77,18 +77,16 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForAllCompletions(
     {
         std::shared_ptr<QFile> unifiedWellPathFile;
 
-        auto allCompletions  = wellPath->allCompletionsRecursively();
+        auto allCompletions = wellPath->allCompletionsRecursively();
+
+        bool exportPerforations = true; // Always export perforations to make it possible to export WELSEGS when no
+                                        // completions are present
+
         bool exportFractures = exportSettings.includeFractures() &&
                                std::any_of( allCompletions.begin(), allCompletions.end(), []( auto completion ) {
                                    return completion->isEnabled() &&
                                           completion->componentType() == RiaDefines::WellPathComponentType::FRACTURE;
                                } );
-        bool exportPerforations = exportSettings.includePerforations() &&
-                                  std::any_of( allCompletions.begin(), allCompletions.end(), []( auto completion ) {
-                                      return completion->isEnabled() &&
-                                             completion->componentType() ==
-                                                 RiaDefines::WellPathComponentType::PERFORATION_INTERVAL;
-                                  } );
 
         bool exportFishbones = exportSettings.includeFishbones() &&
                                std::any_of( allCompletions.begin(), allCompletions.end(), []( auto completion ) {
