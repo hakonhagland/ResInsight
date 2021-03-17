@@ -58,7 +58,7 @@ void writeWelsegsSegmentsRecursively( RifTextDataTableFormatter&   formatter,
                                       gsl::not_null<RicMswBranch*> branch,
                                       gsl::not_null<int*>          segmentNumber,
                                       double                       maxSegmentLength,
-                                      RicMswSegment*               connectedToSegment = nullptr );
+                                      RicMswSegment*               connectedToSegment );
 
 void writeWelsegsSegment( RicMswSegment*               segment,
                           const RicMswSegment*         previousSegment,

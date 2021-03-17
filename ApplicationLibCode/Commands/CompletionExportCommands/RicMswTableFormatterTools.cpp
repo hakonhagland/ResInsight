@@ -78,7 +78,13 @@ void RicMswTableFormatterTools::generateWelsegsTable( RifTextDataTableFormatter&
 
     int segmentNumber = 2; // There's an implicit segment number 1.
 
-    writeWelsegsSegmentsRecursively( formatter, exportInfo, exportInfo.mainBoreBranch(), &segmentNumber, maxSegmentLength );
+    RicMswSegment* parentSegment = nullptr;
+    writeWelsegsSegmentsRecursively( formatter,
+                                     exportInfo,
+                                     exportInfo.mainBoreBranch(),
+                                     &segmentNumber,
+                                     maxSegmentLength,
+                                     parentSegment );
 
     formatter.tableCompleted();
 }
@@ -99,13 +105,14 @@ void RicMswTableFormatterTools::writeWelsegsSegmentsRecursively( RifTextDataTabl
 
     auto branchSegments = branch->segments();
     auto it             = branchSegments.begin();
-    if ( outletValve = dynamic_cast<RicMswValve*>( branch.get() ); outletValve != nullptr )
+    if ( outletValve = dynamic_cast<RicMswTieInICV*>( branch.get() ); outletValve != nullptr )
     {
         writeValveWelsegsSegment( outletSegment, outletValve, formatter, exportInfo, maxSegmentLength, segmentNumber );
 
         auto valveSegments = outletValve->segments();
         outletSegment      = valveSegments.front();
-        *segmentNumber     = outletSegment->segmentNumber() + 1;
+
+        *segmentNumber = outletSegment->segmentNumber() + 1;
         ++it; // skip segment below
     }
 
@@ -151,20 +158,35 @@ void RicMswTableFormatterTools::writeWelsegsSegmentsRecursively( RifTextDataTabl
 
     for ( auto childBranch : branch->branches() )
     {
-        RicMswSegment* tieInSegment = nullptr;
+        RicMswSegment* tieInSegmentOnParentBranch = nullptr;
 
-        for ( auto seg : branch->segments() )
         {
-            if ( seg->startMD() < childBranch->startMD() && childBranch->startMD() < seg->endMD() )
+            // The the tie-in branch is connected to the segment of parent branch with the closest midpoint
+
+            double closestSegmentMidPointDistance = std::numeric_limits<double>::infinity();
+            double branchStartMD                  = childBranch->startMD();
+            for ( auto seg : branch->segments() )
             {
-                tieInSegment = seg;
+                double midpointMD = 0.5 * ( seg->startMD() + seg->endMD() );
+
+                double candidateDistance = std::abs( midpointMD - branchStartMD );
+                if ( candidateDistance < closestSegmentMidPointDistance )
+                {
+                    tieInSegmentOnParentBranch     = seg;
+                    closestSegmentMidPointDistance = candidateDistance;
+                }
             }
         }
 
-        RicMswSegment* outletSegmentForChild = outletSegment;
-        if ( tieInSegment ) outletSegmentForChild = tieInSegment;
+        RicMswSegment* outletSegmentForChildBranch = outletSegment;
+        if ( tieInSegmentOnParentBranch ) outletSegmentForChildBranch = tieInSegmentOnParentBranch;
 
-        writeWelsegsSegmentsRecursively( formatter, exportInfo, childBranch, segmentNumber, maxSegmentLength, outletSegmentForChild );
+        writeWelsegsSegmentsRecursively( formatter,
+                                         exportInfo,
+                                         childBranch,
+                                         segmentNumber,
+                                         maxSegmentLength,
+                                         outletSegmentForChildBranch );
     }
 }
 
