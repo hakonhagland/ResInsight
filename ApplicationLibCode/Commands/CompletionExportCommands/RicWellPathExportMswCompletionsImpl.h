@@ -35,6 +35,7 @@ class RimWellPath;
 class RimWellPathFracture;
 class RimMswCompletionParameters;
 class RigWellPath;
+class RimModeledWellPath;
 
 struct WellPathCellIntersectionInfo;
 
@@ -177,4 +178,8 @@ private:
                                              RicMswExportInfo*            exportInfo,
                                              gsl::not_null<RicMswBranch*> branch,
                                              gsl::not_null<int*>          branchNumber );
+
+    static std::unique_ptr<RicMswBranch> createChildMswBranch( const RimModeledWellPath* childWellPath );
+
+    static std::vector<RimModeledWellPath*> wellPathsWithTieIn( const RimWellPath* wellPath );
 };
