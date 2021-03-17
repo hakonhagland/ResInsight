@@ -441,7 +441,7 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
                                                      &foundSubGridIntersections,
                                                      maxSegmentLength );
 
-                exportInfo->mainBoreBranch()->addSegment( std::move( segment ) );
+                branch->addSegment( std::move( segment ) );
             }
 
             subStartMD  = subEndMD;
@@ -449,7 +449,7 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
         }
     }
     exportInfo->setHasSubGridIntersections( exportInfo->hasSubGridIntersections() || foundSubGridIntersections );
-    exportInfo->mainBoreBranch()->sortSegments();
+    branch->sortSegments();
 
     std::vector<RimModeledWellPath*> connectedWellPaths = wellPathsWithTieIn( wellPath );
     for ( auto childWellPath : connectedWellPaths )
@@ -545,10 +545,10 @@ bool RicWellPathExportMswCompletionsImpl::generateFracturesMswExportInfo(
             }
         }
 
-        exportInfo->mainBoreBranch()->addSegment( std::move( segment ) );
+        branch->addSegment( std::move( segment ) );
     }
     exportInfo->setHasSubGridIntersections( foundSubGridIntersections );
-    exportInfo->mainBoreBranch()->sortSegments();
+    branch->sortSegments();
 
     std::vector<RimModeledWellPath*> connectedWellPaths = wellPathsWithTieIn( wellPath );
     for ( auto childWellPath : connectedWellPaths )
