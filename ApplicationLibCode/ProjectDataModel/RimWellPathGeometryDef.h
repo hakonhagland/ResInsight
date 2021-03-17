@@ -28,6 +28,7 @@
 #include "cafPdmObject.h"
 #include "cafPdmPtrField.h"
 
+#include "cvfColor3.h"
 #include "cvfObject.h"
 
 class RimWellPath;
@@ -81,6 +82,11 @@ public:
 
     std::vector<RiaWellPlanCalculator::WellPlanSegment> wellPlan() const;
 
+    // Well target appearance
+    bool         showSpheres() const;
+    cvf::Color3f sphereColor() const;
+    double       sphereRadiusFactor() const;
+
 protected:
     void defineCustomContextMenu( const caf::PdmFieldHandle* fieldNeedingMenu, QMenu* menu, QWidget* fieldEditorWidget ) override;
 
@@ -118,6 +124,10 @@ private:
     caf::PdmField<std::vector<double>>          m_fixedMeasuredDepths;
 
     caf::PdmField<bool> m_isAttachedToParentWell;
+
+    caf::PdmField<bool>         m_showSpheres;
+    caf::PdmField<cvf::Color3f> m_sphereColor;
+    caf::PdmField<double>       m_sphereRadiusFactor;
 
     std::shared_ptr<RicCreateWellTargetsPickEventHandler> m_pickTargetsEventHandler;
 };
