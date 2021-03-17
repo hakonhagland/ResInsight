@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (C) 2018 Equinor ASA
+//  Copyright (C) 2021- Equinor ASA
 //
 //  ResInsight is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 //  for more details.
 //
 /////////////////////////////////////////////////////////////////////////////////
+
 #pragma once
 
 #include "RicMswBranch.h"
@@ -26,6 +27,7 @@
 #include "cvfMath.h"
 
 #include <QString>
+
 #include <memory>
 
 class RimWellPathValve;
@@ -49,6 +51,9 @@ private:
     size_t m_index;
 };
 
+//==================================================================================================
+///
+//==================================================================================================
 class RicMswFishbones : public RicMswCompletion
 {
 public:
@@ -187,7 +192,9 @@ public:
 };
 
 //==================================================================================================
-///
+// This object is representing the optional tie-in valve used to limit the inflow from a branch
+// into the parent branch
+// ICV valve is the only supported valve for this MSW item
 //==================================================================================================
 class RicMswTieInICV : public RicMswWsegValve
 {

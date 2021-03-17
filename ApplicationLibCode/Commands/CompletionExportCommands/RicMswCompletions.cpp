@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (C) 2018 Equinor ASA
+//  Copyright (C) 2021- Equinor ASA
 //
 //  ResInsight is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -18,9 +18,8 @@
 
 #include "RicMswCompletions.h"
 
-#include "RicMswSegmentCellIntersection.h"
-
 #include "RiaLogging.h"
+#include "RicMswSegmentCellIntersection.h"
 #include "RimWellPath.h"
 #include "RimWellPathValve.h"
 
@@ -269,6 +268,7 @@ RicMswPerforationAICD::RicMswPerforationAICD( const QString&          label,
     , m_length( 0.0 )
     , m_flowScalingFactor( 0.0 )
 {
+    m_parameters.fill( std::numeric_limits<double>::infinity() );
 }
 
 //--------------------------------------------------------------------------------------------------
