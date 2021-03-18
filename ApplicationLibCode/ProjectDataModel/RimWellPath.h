@@ -156,9 +156,10 @@ public:
 
     bool                      isTopLevelWellPath() const;
     bool                      isMultiLateralWellPath() const;
+    RimWellPath*              topLevelWellPath();
     const RimWellPath*        topLevelWellPath() const;
     void                      updateAfterAddingToWellPathGroup();
-    std::vector<RimWellPath*> allTieInWellsRecursively() const;
+    std::vector<RimWellPath*> wellPathLateralsRecursively() const;
 
     RimWellPathTieIn* wellPathTieIn() const;
     void              connectWellPaths( RimWellPath* childWell, double tieInMeasuredDepth );

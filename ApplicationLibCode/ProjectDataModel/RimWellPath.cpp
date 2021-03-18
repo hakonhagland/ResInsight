@@ -288,7 +288,9 @@ const RimWellPathCompletions* RimWellPath::completions() const
 //--------------------------------------------------------------------------------------------------
 const RimWellPathCompletionSettings* RimWellPath::completionSettings() const
 {
-    return m_completionSettings();
+    if ( isTopLevelWellPath() ) return m_completionSettings();
+
+    return topLevelWellPath()->completionSettings();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -296,7 +298,9 @@ const RimWellPathCompletionSettings* RimWellPath::completionSettings() const
 //--------------------------------------------------------------------------------------------------
 RimWellPathCompletionSettings* RimWellPath::completionSettings()
 {
-    return m_completionSettings();
+    if ( isTopLevelWellPath() ) return m_completionSettings();
+
+    return topLevelWellPath()->completionSettings();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -969,7 +973,7 @@ std::vector<const RimWellPathComponentInterface*> RimWellPath::allCompletionsRec
 {
     std::vector<const RimWellPathComponentInterface*> allCompletions;
 
-    auto tieInWells = allTieInWellsRecursively();
+    auto tieInWells = wellPathLateralsRecursively();
     tieInWells.push_back( const_cast<RimWellPath*>( this ) );
 
     for ( auto w : tieInWells )
@@ -1062,6 +1066,19 @@ bool RimWellPath::isMultiLateralWellPath() const
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+RimWellPath* RimWellPath::topLevelWellPath()
+{
+    if ( m_wellPathTieIn() && m_wellPathTieIn->parentWell() )
+    {
+        return m_wellPathTieIn()->parentWell()->topLevelWellPath();
+    }
+
+    return this;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 const RimWellPath* RimWellPath::topLevelWellPath() const
 {
     if ( m_wellPathTieIn() && m_wellPathTieIn->parentWell() )
@@ -1082,7 +1099,7 @@ void RimWellPath::updateAfterAddingToWellPathGroup()
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-std::vector<RimWellPath*> RimWellPath::allTieInWellsRecursively() const
+std::vector<RimWellPath*> RimWellPath::wellPathLateralsRecursively() const
 {
     std::vector<RimWellPath*> tieInWells;
 
