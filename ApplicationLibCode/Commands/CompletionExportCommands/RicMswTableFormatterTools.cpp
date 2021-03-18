@@ -509,7 +509,10 @@ void RicMswTableFormatterTools::generateWsegvalvTableRecursively( RifTextDataTab
                     CVF_ASSERT( wsegValve->segments().size() == 1u );
 
                     auto firstSubSegment = wsegValve->segments().front();
-                    if ( !firstSubSegment->intersections().empty() )
+
+                    // TODO: The following line was blocking export of valves for fishbones
+                    // Unclear why this line was included. Remove when MSW export has ben verified correctly
+                    // if ( !firstSubSegment->intersections().empty() )
                     {
                         if ( wsegValve->completionType() == RigCompletionData::PERFORATION_ICD ||
                              wsegValve->completionType() == RigCompletionData::PERFORATION_ICV )
