@@ -495,7 +495,6 @@ bool RicWellPathExportMswCompletionsImpl::generateFracturesMswExportInfo(
     // Main bore
     const RigMainGrid* grid = eclipseCase->eclipseCaseData()->mainGrid();
 
-    int mainBoreSegment = 1;
     for ( const auto& cellIntInfo : filteredIntersections )
     {
         size_t             localGridIdx = 0u;
