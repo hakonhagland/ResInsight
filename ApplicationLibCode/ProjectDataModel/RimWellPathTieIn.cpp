@@ -22,10 +22,11 @@
 
 #include "RimModeledWellPath.h"
 #include "RimTools.h"
+#include "RimWellPathCollection.h"
 #include "RimWellPathGeometryDef.h"
+#include "RimWellPathTarget.h"
 #include "RimWellPathValve.h"
 
-#include "RimWellPathTarget.h"
 #include "cafPdmFieldScriptingCapability.h"
 #include "cafPdmObjectScriptingCapability.h"
 #include "cafPdmUiDoubleValueEditor.h"
@@ -178,6 +179,10 @@ void RimWellPathTieIn::fieldChangedByUi( const caf::PdmFieldHandle* changedField
     }
 
     updateChildWellGeometry();
+
+    // Update all well paths to make sure the visibility of completion settings is updated
+    // Completions settings is only visible for top-level wells, not for tie-in wells
+    RimTools::wellPathCollection()->updateAllRequiredEditors();
 }
 
 //--------------------------------------------------------------------------------------------------
