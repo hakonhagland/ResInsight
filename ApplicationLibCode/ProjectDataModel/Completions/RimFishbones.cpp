@@ -24,6 +24,7 @@
 #include "RigFishbonesGeometry.h"
 #include "RigWellPath.h"
 #include "RimFishbonesCollection.h"
+#include "RimFishbonesPipeProperties.h"
 #include "RimMultipleValveLocations.h"
 #include "RimProject.h"
 #include "RimWellPath.h"
@@ -185,7 +186,7 @@ QString RimFishbones::generatedName() const
         dynamic_cast<caf::PdmChildArrayField<RimFishbones*>*>( this->parentField() );
     CVF_ASSERT( container );
 
-    size_t index = container->index( this );
+    size_t index = container->index( this ) + 1;
     return QString( "Fishbone %1" ).arg( index );
 }
 
@@ -278,6 +279,14 @@ double RimFishbones::tubingDiameter( RiaDefines::EclipseUnitSystem unitSystem ) 
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
+double RimFishbones::holeDiameter( RiaDefines::EclipseUnitSystem unitSystem ) const
+{
+    return m_pipeProperties()->holeDiameter( unitSystem );
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
 double RimFishbones::effectiveDiameter( RiaDefines::EclipseUnitSystem unitSystem ) const
 {
     double innerRadius = tubingDiameter( unitSystem ) / 2;
@@ -290,6 +299,14 @@ double RimFishbones::effectiveDiameter( RiaDefines::EclipseUnitSystem unitSystem
 
     double effectiveRadius = cvf::Math::sqrt( effectiveArea / cvf::PI_D );
     return effectiveRadius * 2;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+double RimFishbones::skinFactor() const
+{
+    return m_pipeProperties()->skinFactor();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -380,6 +397,14 @@ void RimFishbones::geometryUpdated()
     RimProject* proj;
     this->firstAncestorOrThisOfTypeAsserted( proj );
     proj->reloadCompletionTypeResultsInAllViews();
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+const std::vector<RimFishbones::SubAndLateralIndex>& RimFishbones::installedLateralIndices() const
+{
+    return m_subLateralIndices;
 }
 
 //--------------------------------------------------------------------------------------------------
