@@ -79,9 +79,6 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForAllCompletions(
 
         auto allCompletions = wellPath->allCompletionsRecursively();
 
-        bool exportPerforations = true; // Always export perforations to make it possible to export WELSEGS when no
-                                        // completions are present
-
         bool exportFractures = exportSettings.includeFractures() &&
                                std::any_of( allCompletions.begin(), allCompletions.end(), []( auto completion ) {
                                    return completion->isEnabled() &&
@@ -94,9 +91,7 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForAllCompletions(
                                           completion->componentType() == RiaDefines::WellPathComponentType::FISHBONES;
                                } );
 
-        bool exportAnyCompletion = exportFractures || exportPerforations || exportFishbones;
-        if ( exportAnyCompletion && exportSettings.fileSplit() == RicExportCompletionDataSettingsUi::SPLIT_ON_WELL &&
-             !unifiedWellPathFile )
+        if ( exportSettings.fileSplit() == RicExportCompletionDataSettingsUi::SPLIT_ON_WELL && !unifiedWellPathFile )
         {
             QString wellFileName = QString( "%1_UnifiedCompletions_MSW_%2" )
                                        .arg( wellPath->name(), exportSettings.caseToApply->caseUserDescription() );
@@ -104,8 +99,10 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForAllCompletions(
                 RicWellPathExportCompletionsFileTools::openFileForExport( exportSettings.folder, wellFileName );
         }
 
-        if ( exportPerforations )
         {
+            // Always use perforation functions to export well segments along well path.
+            // If no perforations are present, skip Perforation from file name
+
             std::shared_ptr<QFile> perforationsExportFile;
             if ( unifiedExportFile )
                 perforationsExportFile = unifiedExportFile;
@@ -113,8 +110,17 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForAllCompletions(
                 perforationsExportFile = unifiedWellPathFile;
             else
             {
-                QString fileName = QString( "%1_Perforation_MSW_%2" )
-                                       .arg( wellPath->name(), exportSettings.caseToApply->caseUserDescription() );
+                bool anyPerforationsPresent =
+                    exportSettings.includeFractures() &&
+                    std::any_of( allCompletions.begin(), allCompletions.end(), []( auto completion ) {
+                        return completion->isEnabled() &&
+                               completion->componentType() == RiaDefines::WellPathComponentType::PERFORATION_INTERVAL;
+                    } );
+
+                QString perforationText = anyPerforationsPresent ? "Perforation_" : "";
+                QString fileName =
+                    QString( "%1_%2MSW_%3" )
+                        .arg( wellPath->name(), perforationText, exportSettings.caseToApply->caseUserDescription() );
                 perforationsExportFile =
                     RicWellPathExportCompletionsFileTools::openFileForExport( exportSettings.folder, fileName );
             }
