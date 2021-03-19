@@ -865,8 +865,8 @@ void RicMswTableFormatterTools::writeCompletionWelsegsSegments( gsl::not_null<co
             formatter.add( outletSegmentNumber );
             formatter.add( length );
             formatter.add( depth );
-            formatter.add( outletSegment->effectiveDiameter() );
-            formatter.add( outletSegment->openHoleRoughnessFactor() );
+            formatter.add( segment->equivalentDiameter() );
+            formatter.add( segment->openHoleRoughnessFactor() );
             formatter.rowCompleted();
             outletSegmentNumber = subSegmentNumber;
         }

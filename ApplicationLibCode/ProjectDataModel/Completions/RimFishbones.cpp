@@ -285,9 +285,11 @@ double RimFishbones::holeDiameter( RiaDefines::EclipseUnitSystem unitSystem ) co
 }
 
 //--------------------------------------------------------------------------------------------------
-///
+/// Compute the equivalent diameter based on the area between two cylinders
+//
+// http://www.fekete.com/san/webhelp/feketeharmony/harmony_webhelp/content/html_files/reference_material/calculations_and_correlations/annular_diameters.htm
 //--------------------------------------------------------------------------------------------------
-double RimFishbones::effectiveDiameter( RiaDefines::EclipseUnitSystem unitSystem ) const
+double RimFishbones::equivalentDiameter( RiaDefines::EclipseUnitSystem unitSystem ) const
 {
     double innerRadius = tubingDiameter( unitSystem ) / 2;
     double outerRadius = holeDiameter( unitSystem ) / 2;
@@ -295,9 +297,9 @@ double RimFishbones::effectiveDiameter( RiaDefines::EclipseUnitSystem unitSystem
     double innerArea = cvf::PI_D * innerRadius * innerRadius;
     double outerArea = cvf::PI_D * outerRadius * outerRadius;
 
-    double effectiveArea = outerArea - innerArea;
+    double equivalentArea = outerArea - innerArea;
 
-    double effectiveRadius = cvf::Math::sqrt( effectiveArea / cvf::PI_D );
+    double effectiveRadius = cvf::Math::sqrt( equivalentArea / cvf::PI_D );
     return effectiveRadius * 2;
 }
 

@@ -410,13 +410,9 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
             double subEndTVD = RicMswTableFormatterTools::tvdFromMeasuredDepth( branch->wellPath(), subEndMD );
 
             {
-                auto segment = std::make_unique<RicMswSegment>( subs->generatedName(),
-                                                                subStartMD,
-                                                                subEndMD,
-                                                                subStartTVD,
-                                                                subEndTVD,
-                                                                sub.first );
-                segment->setEffectiveDiameter( subs->effectiveDiameter( unitSystem ) );
+                auto segment =
+                    std::make_unique<RicMswSegment>( "", subStartMD, subEndMD, subStartTVD, subEndTVD, sub.first );
+                segment->setEquivalentDiameter( subs->equivalentDiameter( unitSystem ) );
                 segment->setHoleDiameter( subs->holeDiameter( unitSystem ) );
                 segment->setOpenHoleRoughnessFactor( subs->openHoleRoughnessFactor( unitSystem ) );
                 segment->setSkinFactor( subs->skinFactor() );
@@ -445,7 +441,8 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
                                                      subs,
                                                      segment.get(),
                                                      &foundSubGridIntersections,
-                                                     maxSegmentLength );
+                                                     maxSegmentLength,
+                                                     unitSystem );
 
                 branch->addSegment( std::move( segment ) );
             }
@@ -1301,7 +1298,8 @@ void RicWellPathExportMswCompletionsImpl::assignFishbonesLateralIntersections( c
                                                                                const RimFishbones*   fishbonesSubs,
                                                                                gsl::not_null<RicMswSegment*> segment,
                                                                                bool*  foundSubGridIntersections,
-                                                                               double maxSegmentLength )
+                                                                               double maxSegmentLength,
+                                                                               RiaDefines::EclipseUnitSystem unitSystem )
 {
     CVF_ASSERT( foundSubGridIntersections != nullptr );
 
@@ -1364,6 +1362,12 @@ void RicWellPathExportMswCompletionsImpl::assignFishbonesLateralIntersections( c
                                                                cellIntInfo.endMD,
                                                                previousExitTVD,
                                                                cellIntInfo.endTVD() );
+
+            subSegment->setEquivalentDiameter( fishbonesSubs->equivalentDiameter( unitSystem ) );
+            subSegment->setHoleDiameter( fishbonesSubs->holeDiameter( unitSystem ) );
+            subSegment->setOpenHoleRoughnessFactor( fishbonesSubs->openHoleRoughnessFactor( unitSystem ) );
+            subSegment->setSkinFactor( fishbonesSubs->skinFactor() );
+            subSegment->setSourcePdmObject( fishbonesSubs );
 
             auto intersection = std::make_shared<RicMswSegmentCellIntersection>( gridName,
                                                                                  cellIntInfo.globCellIndex,
