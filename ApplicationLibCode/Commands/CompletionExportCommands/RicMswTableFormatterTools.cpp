@@ -158,27 +158,9 @@ void RicMswTableFormatterTools::writeWelsegsSegmentsRecursively( RifTextDataTabl
 
     for ( auto childBranch : branch->branches() )
     {
-        RicMswSegment* tieInSegmentOnParentBranch = nullptr;
-
-        {
-            // The the tie-in branch is connected to the segment of parent branch with the closest midpoint
-
-            double closestSegmentMidPointDistance = std::numeric_limits<double>::infinity();
-            double branchStartMD                  = childBranch->startMD();
-            for ( auto seg : branch->segments() )
-            {
-                double midpointMD = 0.5 * ( seg->startMD() + seg->endMD() );
-
-                double candidateDistance = std::abs( midpointMD - branchStartMD );
-                if ( candidateDistance < closestSegmentMidPointDistance )
-                {
-                    tieInSegmentOnParentBranch     = seg;
-                    closestSegmentMidPointDistance = candidateDistance;
-                }
-            }
-        }
-
         RicMswSegment* outletSegmentForChildBranch = outletSegment;
+
+        RicMswSegment* tieInSegmentOnParentBranch = branch->findClosestSegmentByMidpoint( childBranch->startMD() );
         if ( tieInSegmentOnParentBranch ) outletSegmentForChildBranch = tieInSegmentOnParentBranch;
 
         writeWelsegsSegmentsRecursively( formatter,
