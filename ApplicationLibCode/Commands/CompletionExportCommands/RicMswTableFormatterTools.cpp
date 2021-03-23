@@ -140,7 +140,8 @@ void RicMswTableFormatterTools::writeWelsegsSegmentsRecursively( RifTextDataTabl
             if ( performationMsw ) continue;
 
             auto segmentValve = dynamic_cast<RicMswValve*>( completion );
-            if ( segmentValve != nullptr )
+            auto fishboneIcd  = dynamic_cast<RicMswFishbonesICD*>( completion );
+            if ( !fishboneIcd && segmentValve != nullptr )
             {
                 writeValveWelsegsSegment( segment, segmentValve, formatter, exportInfo, maxSegmentLength, segmentNumber );
                 outletValve   = segmentValve;
@@ -864,6 +865,16 @@ void RicMswTableFormatterTools::writeCompletionWelsegsSegments( gsl::not_null<co
             formatter.add( segment->openHoleRoughnessFactor() );
             formatter.rowCompleted();
             outletSegmentNumber = subSegmentNumber;
+        }
+
+        for ( auto completionSegment : completion->segments() )
+        {
+            auto noConst = const_cast<RicMswSegment*>( completionSegment );
+            noConst->setSegmentNumber( outletSegmentNumber );
+            for ( auto comp : completionSegment->completions() )
+            {
+                writeCompletionWelsegsSegments( completionSegment, comp, formatter, exportInfo, maxSegmentLength, segmentNumber );
+            }
         }
     }
 }
