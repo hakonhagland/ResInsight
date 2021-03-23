@@ -64,6 +64,12 @@ public:
                                                    int                    timeStep,
                                                    bool                   exportDataSourceAsComment );
 
+    static void generateFishbonesMswExportInfoForWell( const RimEclipseCase*            eclipseCase,
+                                                       const RimWellPath*               wellPath,
+                                                       gsl::not_null<RicMswExportInfo*> exportInfo,
+                                                       gsl::not_null<RicMswBranch*>     branch );
+
+private:
     static void generateFishbonesMswExportInfo( const RimEclipseCase*                            eclipseCase,
                                                 const RimWellPath*                               wellPath,
                                                 double                                           initialMD,
@@ -72,7 +78,6 @@ public:
                                                 gsl::not_null<RicMswExportInfo*>                 exportInfo,
                                                 gsl::not_null<RicMswBranch*>                     branch );
 
-private:
     static void generateFishbonesMswExportInfo( const RimEclipseCase*                            eclipseCase,
                                                 const RimWellPath*                               wellPath,
                                                 double                                           initialMD,

@@ -221,40 +221,44 @@ void RicFishbonesTransmissibilityCalculationFeatureImp::findFishboneLateralsWell
     exportInfo.setLinerDiameter( mswParameters->linerDiameter( unitSystem ) );
     exportInfo.setRoughnessFactor( mswParameters->roughnessFactor( unitSystem ) );
 
-    RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo( settings.caseToApply(),
-                                                                         wellPath,
-                                                                         0.0,
-                                                                         {},
-                                                                         false,
-                                                                         &exportInfo,
-                                                                         exportInfo.mainBoreBranch() );
+    RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfoForWell( settings.caseToApply(),
+                                                                                wellPath,
+                                                                                &exportInfo,
+                                                                                exportInfo.mainBoreBranch() );
 
     bool isMainBore = false;
 
-    for ( auto segment : exportInfo.mainBoreBranch()->segments() )
+    for ( auto mainBoreSegment : exportInfo.mainBoreBranch()->segments() )
     {
-        for ( auto completion : segment->completions() )
+        for ( auto mainBoreCompletion : mainBoreSegment->completions() )
         {
-            for ( auto completionSegment : completion->segments() )
+            for ( auto completionSegment : mainBoreCompletion->segments() )
             {
-                for ( std::shared_ptr<RicMswSegmentCellIntersection> intersection : completionSegment->intersections() )
+                for ( auto completion : completionSegment->completions() )
                 {
-                    double  diameter = segment->holeDiameter();
-                    QString completionMetaData =
-                        ( segment->label() +
-                          QString( ": Sub: %1 Lateral: %2" ).arg( segment->subIndex() ).arg( completion->index() ) );
+                    for ( auto segment : completion->segments() )
+                    {
+                        for ( auto intersection : segment->intersections() )
+                        {
+                            double  diameter = segment->holeDiameter();
+                            QString completionMetaData =
+                                ( segment->label() +
+                                  QString( ": Sub: %1 Lateral: %2" ).arg( segment->subIndex() ).arg( completion->index() ) );
 
-                    WellBorePartForTransCalc wellBorePart = WellBorePartForTransCalc( intersection->lengthsInCell(),
-                                                                                      diameter / 2.0,
-                                                                                      segment->skinFactor(),
-                                                                                      isMainBore,
-                                                                                      completionMetaData );
+                            WellBorePartForTransCalc wellBorePart =
+                                WellBorePartForTransCalc( intersection->lengthsInCell(),
+                                                          diameter / 2.0,
+                                                          segment->skinFactor(),
+                                                          isMainBore,
+                                                          completionMetaData );
 
-                    wellBorePart.intersectionWithWellMeasuredDepth = segment->endMD();
-                    wellBorePart.lateralIndex                      = completion->index();
-                    wellBorePart.setSourcePdmObject( segment->sourcePdmObject() );
+                            wellBorePart.intersectionWithWellMeasuredDepth = segment->endMD();
+                            wellBorePart.lateralIndex                      = completion->index();
+                            wellBorePart.setSourcePdmObject( segment->sourcePdmObject() );
 
-                    wellBorePartsInCells[intersection->globalCellIndex()].push_back( wellBorePart );
+                            wellBorePartsInCells[intersection->globalCellIndex()].push_back( wellBorePart );
+                        }
+                    }
                 }
             }
         }
@@ -262,8 +266,8 @@ void RicFishbonesTransmissibilityCalculationFeatureImp::findFishboneLateralsWell
 
     {
         // Note that it is not supported to export main bore perforation intervals for Imported Laterals, only for
-        // fishbones defined by ResInsight. It is not trivial to define the open section of the main bore for imported
-        // laterals.
+        // fishbones defined by ResInsight. It is not trivial to define the open section of the main bore for
+        // imported laterals.
 
         if ( wellPath->fishbonesCollection()->isChecked() )
         {
@@ -341,8 +345,8 @@ void RicFishbonesTransmissibilityCalculationFeatureImp::findFishboneImportedLate
         }
     }
 
-    // Note that it is not supported to export main bore perforation intervals for Imported Laterals, only for fishbones
-    // defined by ResInsight
+    // Note that it is not supported to export main bore perforation intervals for Imported Laterals, only for
+    // fishbones defined by ResInsight
 }
 
 //--------------------------------------------------------------------------------------------------

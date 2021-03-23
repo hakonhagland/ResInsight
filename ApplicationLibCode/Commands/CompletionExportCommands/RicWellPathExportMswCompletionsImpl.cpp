@@ -384,8 +384,6 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
 
     // Create a dummy perforation interval
     RimPerforationInterval perfInterval;
-    // perfInterval.setStartAndEndMD( wellPath->fishbonesCollection()->startMD(),
-    // wellPath->fishbonesCollection()->endMD() );
 
     createWellPathSegments( branch, filteredIntersections, { &perfInterval }, wellPath, -1, eclipseCase, &foundSubGridIntersections );
 
@@ -524,6 +522,26 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
 
         branch->addChildBranch( std::move( childMswBranch ) );
     }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfoForWell( const RimEclipseCase* eclipseCase,
+                                                                                 const RimWellPath*    wellPath,
+                                                                                 gsl::not_null<RicMswExportInfo*> exportInfo,
+                                                                                 gsl::not_null<RicMswBranch*> branch )
+{
+    double initialMD = 0.0; // Start measured depth location to export MSW data for. Either based on first intersection
+                            // with active grid, or user defined value.
+
+    auto mswParameters     = wellPath->fishbonesCollection()->mswParameters();
+    auto cellIntersections = generateCellSegments( eclipseCase, wellPath, mswParameters, &initialMD );
+
+    RiaDefines::EclipseUnitSystem unitSystem = eclipseCase->eclipseCaseData()->unitsType();
+
+    bool enableSegmentSplitting = false;
+    generateFishbonesMswExportInfo( eclipseCase, wellPath, initialMD, cellIntersections, enableSegmentSplitting, exportInfo, branch );
 }
 
 //--------------------------------------------------------------------------------------------------
