@@ -384,7 +384,8 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
 
     // Create a dummy perforation interval
     RimPerforationInterval perfInterval;
-    perfInterval.setStartAndEndMD( wellPath->fishbonesCollection()->startMD(), wellPath->fishbonesCollection()->endMD() );
+    // perfInterval.setStartAndEndMD( wellPath->fishbonesCollection()->startMD(),
+    // wellPath->fishbonesCollection()->endMD() );
 
     createWellPathSegments( branch, filteredIntersections, { &perfInterval }, wellPath, -1, eclipseCase, &foundSubGridIntersections );
 
@@ -404,47 +405,96 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
             subAndLateralIndices[subIndex].push_back( lateralIndex );
         }
 
+        // Find cell intersections closest to each sub location
+        std::map<size_t, std::vector<size_t>> subAndCellIntersectionIndices;
+        {
+            auto fishboneSectionStart = subs->startMD();
+            auto fishboneSectionEnd   = subs->endMD();
+
+            for ( size_t intersectionIndex = 0; intersectionIndex < filteredIntersections.size(); intersectionIndex++ )
+            {
+                auto cellIntersection = filteredIntersections[intersectionIndex];
+                if ( fishboneSectionStart <= cellIntersection.startMD && cellIntersection.startMD < fishboneSectionEnd )
+                {
+                    double intersectionMidpoint = 0.5 * ( cellIntersection.startMD + cellIntersection.endMD );
+                    size_t closestSubIndex      = 0;
+                    double closestDistance      = std::numeric_limits<double>::infinity();
+                    for ( const auto& sub : subAndLateralIndices )
+                    {
+                        double subMD = subs->measuredDepth( sub.first );
+
+                        auto distanceCandicate = std::abs( subMD - intersectionMidpoint );
+                        if ( distanceCandicate < closestDistance )
+                        {
+                            closestDistance = distanceCandicate;
+                            closestSubIndex = sub.first;
+                        }
+                    }
+
+                    subAndCellIntersectionIndices[closestSubIndex].push_back( intersectionIndex );
+                }
+            }
+        }
+
         for ( const auto& sub : subAndLateralIndices )
         {
             double subEndMD  = subs->measuredDepth( sub.first );
             double subEndTVD = RicMswTableFormatterTools::tvdFromMeasuredDepth( branch->wellPath(), subEndMD );
 
             {
-                auto segment =
-                    std::make_unique<RicMswSegment>( "", subStartMD, subEndMD, subStartTVD, subEndTVD, sub.first );
-                segment->setEquivalentDiameter( subs->equivalentDiameter( unitSystem ) );
-                segment->setHoleDiameter( subs->holeDiameter( unitSystem ) );
-                segment->setOpenHoleRoughnessFactor( subs->openHoleRoughnessFactor( unitSystem ) );
-                segment->setSkinFactor( subs->skinFactor() );
-                segment->setSourcePdmObject( subs );
-
                 // Add completion for ICD
-                auto icdCompletion =
-                    std::make_unique<RicMswFishbonesICD>( QString( "ICD" ), wellPath, subEndMD, subEndTVD, nullptr );
                 auto icdSegment =
                     std::make_unique<RicMswSegment>( "ICD segment", subEndMD, subEndMD + 0.1, subEndTVD, subEndTVD, sub.first );
-                icdCompletion->setFlowCoefficient( subs->icdFlowCoefficient() );
-                double icdOrificeRadius = subs->icdOrificeDiameter( unitSystem ) / 2;
-                icdCompletion->setArea( icdOrificeRadius * icdOrificeRadius * cvf::PI_D * subs->icdCount() );
-
-                icdCompletion->addSegment( std::move( icdSegment ) );
-                segment->addCompletion( std::move( icdCompletion ) );
 
                 for ( auto lateralIndex : sub.second )
                 {
                     QString label = QString( "Lateral %1" ).arg( lateralIndex );
-                    segment->addCompletion(
+                    icdSegment->addCompletion(
                         std::make_unique<RicMswFishbones>( label, wellPath, subEndMD, subEndTVD, lateralIndex ) );
                 }
+
                 assignFishbonesLateralIntersections( eclipseCase,
                                                      branch->wellPath(),
                                                      subs,
-                                                     segment.get(),
+                                                     icdSegment.get(),
                                                      &foundSubGridIntersections,
                                                      maxSegmentLength,
                                                      unitSystem );
 
-                branch->addSegment( std::move( segment ) );
+                auto icdCompletion =
+                    std::make_unique<RicMswFishbonesICD>( QString( "ICD" ), wellPath, subEndMD, subEndTVD, nullptr );
+                icdCompletion->setFlowCoefficient( subs->icdFlowCoefficient() );
+                double icdOrificeRadius = subs->icdOrificeDiameter( unitSystem ) / 2;
+                icdCompletion->setArea( icdOrificeRadius * icdOrificeRadius * cvf::PI_D * subs->icdCount() );
+
+                // assign open hole segments to sub
+                {
+                    const RigMainGrid* mainGrid = eclipseCase->mainGrid();
+
+                    for ( auto intersectionIndex : subAndCellIntersectionIndices[sub.first] )
+                    {
+                        auto intersection = filteredIntersections[intersectionIndex];
+
+                        size_t i, j, k;
+                        mainGrid->ijkFromCellIndex( intersection.globCellIndex, &i, &j, &k );
+                        cvf::Vec3st localIJK( i, j, k );
+
+                        auto mswIntersect =
+                            std::make_shared<RicMswSegmentCellIntersection>( "",
+                                                                             intersection.globCellIndex,
+                                                                             localIJK,
+                                                                             intersection.intersectionLengthsInCellCS );
+                        icdSegment->addIntersection( mswIntersect );
+                    }
+                }
+
+                icdCompletion->addSegment( std::move( icdSegment ) );
+
+                RicMswSegment* segmentOnParentBranch = branch->findClosestSegmentByMidpoint( subEndMD );
+                if ( segmentOnParentBranch )
+                {
+                    segmentOnParentBranch->addCompletion( std::move( icdCompletion ) );
+                }
             }
 
             subStartMD  = subEndMD;
@@ -575,7 +625,6 @@ bool RicWellPathExportMswCompletionsImpl::generateFracturesMswExportInfo(
 
     return true;
 }
-
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
@@ -1535,6 +1584,11 @@ void RicWellPathExportMswCompletionsImpl::assignBranchNumbersToOtherCompletions(
         if ( completion->completionType() != RigCompletionData::PERFORATION )
         {
             completion->setBranchNumber( ++( *branchNumber ) );
+
+            for ( auto seg : completion->segments() )
+            {
+                assignBranchNumbersToOtherCompletions( eclipseCase, seg, branchNumber );
+            }
         }
     }
 }
