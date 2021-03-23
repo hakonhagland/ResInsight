@@ -304,26 +304,6 @@ void RicMswTableFormatterTools::generateCompsegTable(
 {
     for ( auto segment : branch->segments() )
     {
-        for ( auto completion : segment->completions() )
-        {
-            if ( completion->segments().empty() || !exportCompletionTypes.count( completion->completionType() ) )
-                continue;
-
-            if ( !*headerGenerated )
-            {
-                generateCompsegHeader( formatter, exportInfo, completion->completionType(), exportSubGridIntersections );
-                *headerGenerated = true;
-            }
-
-            generateCompsegTable( formatter,
-                                  exportInfo,
-                                  completion,
-                                  exportSubGridIntersections,
-                                  exportCompletionTypes,
-                                  headerGenerated,
-                                  intersectedCells );
-        }
-
         auto completion = dynamic_cast<const RicMswCompletion*>( branch.get() );
 
         for ( auto intersection : segment->intersections() )
@@ -348,6 +328,9 @@ void RicMswTableFormatterTools::generateCompsegTable(
             }
 
             cvf::Vec3st ijk = intersection->gridLocalCellIJK();
+
+            // Here we check if the cell is already reported. Make sure we report intersections before other completions
+            // on the segment to be able to connect the branch with most flow
             if ( !intersectedCells->count( ijk ) )
             {
                 if ( exportSubGridIntersections )
@@ -367,6 +350,27 @@ void RicMswTableFormatterTools::generateCompsegTable(
                 formatter.rowCompleted();
                 intersectedCells->insert( ijk );
             }
+        }
+
+        // Report connected completions after the intersection on current segment has been reported
+        for ( auto completion : segment->completions() )
+        {
+            if ( completion->segments().empty() || !exportCompletionTypes.count( completion->completionType() ) )
+                continue;
+
+            if ( !*headerGenerated )
+            {
+                generateCompsegHeader( formatter, exportInfo, completion->completionType(), exportSubGridIntersections );
+                *headerGenerated = true;
+            }
+
+            generateCompsegTable( formatter,
+                                  exportInfo,
+                                  completion,
+                                  exportSubGridIntersections,
+                                  exportCompletionTypes,
+                                  headerGenerated,
+                                  intersectedCells );
         }
     }
 
