@@ -550,6 +550,11 @@ bool RicWellPathExportMswCompletionsImpl::generateFracturesMswExportInfo(
 
     for ( const auto& cellIntInfo : filteredIntersections )
     {
+        if ( cellIntInfo.globCellIndex >= grid->globalCellArray().size() )
+        {
+            continue;
+        }
+
         size_t             localGridIdx = 0u;
         const RigGridBase* localGrid =
             grid->gridAndGridLocalIdxFromGlobalCellIdx( cellIntInfo.globCellIndex, &localGridIdx );
