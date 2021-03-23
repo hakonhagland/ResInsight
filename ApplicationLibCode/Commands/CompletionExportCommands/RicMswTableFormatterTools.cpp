@@ -314,44 +314,57 @@ void RicMswTableFormatterTools::generateCompsegTable(
                 *headerGenerated = true;
             }
 
-            bool isPerforationValve = completion->completionType() == RigCompletionData::PERFORATION_ICD ||
-                                      completion->completionType() == RigCompletionData::PERFORATION_AICD ||
-                                      completion->completionType() == RigCompletionData::PERFORATION_ICV;
+            generateCompsegTable( formatter,
+                                  exportInfo,
+                                  completion,
+                                  exportSubGridIntersections,
+                                  exportCompletionTypes,
+                                  headerGenerated,
+                                  intersectedCells );
+        }
 
-            for ( auto subSegment : completion->segments() )
+        auto completion = dynamic_cast<const RicMswCompletion*>( branch.get() );
+
+        for ( auto intersection : segment->intersections() )
+        {
+            bool isSubGridIntersection = !intersection->gridName().isEmpty();
+            if ( isSubGridIntersection != exportSubGridIntersections ) continue;
+
+            double startLength = segment->startMD();
+            double endLength   = segment->endMD();
+
+            if ( completion )
             {
-                for ( auto intersection : subSegment->intersections() )
+                bool isPerforationValve = completion->completionType() == RigCompletionData::PERFORATION_ICD ||
+                                          completion->completionType() == RigCompletionData::PERFORATION_AICD ||
+                                          completion->completionType() == RigCompletionData::PERFORATION_ICV;
+
+                if ( isPerforationValve )
                 {
-                    bool isSubGridIntersection = !intersection->gridName().isEmpty();
-                    if ( isSubGridIntersection != exportSubGridIntersections ) continue;
-
-                    double startLength = subSegment->startMD();
-                    double endLength   = subSegment->endMD();
-                    if ( isPerforationValve )
-                    {
-                        startLength = segment->startMD();
-                        endLength   = segment->endMD();
-                    }
-
-                    cvf::Vec3st ijk = intersection->gridLocalCellIJK();
-                    if ( !intersectedCells->count( ijk ) )
-                    {
-                        if ( exportSubGridIntersections )
-                        {
-                            formatter.add( intersection->gridName() );
-                        }
-
-                        formatter.addOneBasedCellIndex( ijk.x() ).addOneBasedCellIndex( ijk.y() ).addOneBasedCellIndex(
-                            ijk.z() );
-                        formatter.add( completion->branchNumber() );
-
-                        formatter.add( startLength );
-                        formatter.add( endLength );
-
-                        formatter.rowCompleted();
-                        intersectedCells->insert( ijk );
-                    }
+                    startLength = segment->startMD();
+                    endLength   = segment->endMD();
                 }
+            }
+
+            cvf::Vec3st ijk = intersection->gridLocalCellIJK();
+            if ( !intersectedCells->count( ijk ) )
+            {
+                if ( exportSubGridIntersections )
+                {
+                    formatter.add( intersection->gridName() );
+                }
+
+                formatter.addOneBasedCellIndex( ijk.x() ).addOneBasedCellIndex( ijk.y() ).addOneBasedCellIndex( ijk.z() );
+
+                int branchNumber = -1;
+                if ( completion ) branchNumber = completion->branchNumber();
+                formatter.add( branchNumber );
+
+                formatter.add( startLength );
+                formatter.add( endLength );
+
+                formatter.rowCompleted();
+                intersectedCells->insert( ijk );
             }
         }
     }
