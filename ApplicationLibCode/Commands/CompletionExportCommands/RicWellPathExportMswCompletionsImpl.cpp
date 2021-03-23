@@ -446,7 +446,7 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
 
                 for ( auto lateralIndex : sub.second )
                 {
-                    QString label = QString( "Lateral %1" ).arg( lateralIndex );
+                    QString label = QString( "Lateral %1" ).arg( lateralIndex + 1 );
                     icdSegment->addCompletion(
                         std::make_unique<RicMswFishbones>( label, wellPath, subEndMD, subEndTVD, lateralIndex ) );
                 }
@@ -1433,7 +1433,8 @@ void RicWellPathExportMswCompletionsImpl::assignFishbonesLateralIntersections( c
                                                                previousExitMD,
                                                                cellIntInfo.endMD,
                                                                previousExitTVD,
-                                                               cellIntInfo.endTVD() );
+                                                               cellIntInfo.endTVD(),
+                                                               segment->subIndex() );
 
             subSegment->setEquivalentDiameter( fishbonesSubs->equivalentDiameter( unitSystem ) );
             subSegment->setHoleDiameter( fishbonesSubs->holeDiameter( unitSystem ) );

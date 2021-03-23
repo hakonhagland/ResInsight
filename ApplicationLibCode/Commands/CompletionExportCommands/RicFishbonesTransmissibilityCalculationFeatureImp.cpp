@@ -240,10 +240,10 @@ void RicFishbonesTransmissibilityCalculationFeatureImp::findFishboneLateralsWell
                     {
                         for ( auto intersection : segment->intersections() )
                         {
-                            double  diameter = segment->holeDiameter();
-                            QString completionMetaData =
-                                ( segment->label() +
-                                  QString( ": Sub: %1 Lateral: %2" ).arg( segment->subIndex() ).arg( completion->index() ) );
+                            double  diameter           = segment->holeDiameter();
+                            QString completionMetaData = ( segment->label() + QString( ": Sub: %1 Lateral: %2" )
+                                                                                  .arg( segment->subIndex() + 1 )
+                                                                                  .arg( completion->index() + 1 ) );
 
                             WellBorePartForTransCalc wellBorePart =
                                 WellBorePartForTransCalc( intersection->lengthsInCell(),

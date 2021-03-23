@@ -125,7 +125,7 @@ void RicMswTableFormatterTools::writeWelsegsSegmentsRecursively( RifTextDataTabl
 
         if ( segment->subIndex() != cvf::UNDEFINED_SIZE_T )
         {
-            QString comment = segment->label() + QString( ", sub %1" ).arg( segment->subIndex() );
+            QString comment = segment->label() + QString( ", sub %1" ).arg( segment->subIndex() + 1 );
             formatter.addOptionalComment( comment );
         }
 
@@ -816,7 +816,7 @@ void RicMswTableFormatterTools::writeCompletionWelsegsSegments( gsl::not_null<co
     if ( completion->completionType() == RigCompletionData::FISHBONES )
     {
         formatter.addOptionalComment(
-            QString( "Sub index %1 - %2" ).arg( outletSegment->subIndex() ).arg( completion->label() ) );
+            QString( "Sub index %1 - %2" ).arg( outletSegment->subIndex() + 1 ).arg( completion->label() ) );
     }
     else if ( completion->completionType() == RigCompletionData::FRACTURE )
     {
