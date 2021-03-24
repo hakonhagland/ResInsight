@@ -335,7 +335,6 @@ caf::CmdFeatureMenuBuilder RimContextCommandBuilder::commandsFromSelection()
             menuBuilder << "RicReloadWellPathFormationNamesFeature";
             menuBuilder.addSeparator();
             menuBuilder << "RicWellPathImportPerforationIntervalsFeature";
-            menuBuilder << "RicWellPathImportCompletionsFileFeature";
             menuBuilder << "RicImportWellMeasurementsFeature";
             menuBuilder.subMenuEnd();
             menuBuilder.addSeparator();
@@ -1330,8 +1329,6 @@ int RimContextCommandBuilder::appendImportMenu( caf::CmdFeatureMenuBuilder& menu
     candidates << "RicWellPathFormationsImportFileFeature";
     candidates << "RicWellLogsImportFileFeature";
     candidates << "RicReloadWellPathFormationNamesFeature";
-    candidates << "Separator";
-    candidates << "RicWellPathImportCompletionsFileFeature";
 
     return appendSubMenuWithCommands( menuBuilder, candidates, "Import", QIcon(), addSeparatorBeforeMenu );
 }
