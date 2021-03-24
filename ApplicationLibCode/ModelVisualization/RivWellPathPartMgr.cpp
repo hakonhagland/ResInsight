@@ -32,8 +32,6 @@
 #include "RimEclipseView.h"
 #include "RimFishbones.h"
 #include "RimFishbonesCollection.h"
-#include "RimImportedFishboneLaterals.h"
-#include "RimImportedFishboneLateralsCollection.h"
 #include "RimModeledWellPath.h"
 #include "RimPerforationCollection.h"
 #include "RimPerforationInterval.h"
@@ -367,40 +365,6 @@ void RivWellPathPartMgr::appendWellMeasurementsToModel( cvf::ModelBasicList*    
                     model->addPart( part.p() );
                 }
             }
-        }
-    }
-}
-
-//--------------------------------------------------------------------------------------------------
-///
-//--------------------------------------------------------------------------------------------------
-void RivWellPathPartMgr::appendImportedFishbonesToModel( cvf::ModelBasicList*              model,
-                                                         const caf::DisplayCoordTransform* displayCoordTransform,
-                                                         double                            characteristicCellSize )
-{
-    if ( !m_rimWellPath || !m_rimWellPath->fishbonesCollection()->wellPathCollection()->isChecked() ) return;
-
-    RivPipeGeometryGenerator                  geoGenerator;
-    std::vector<RimImportedFishboneLaterals*> fishbonesWellPaths;
-    m_rimWellPath->descendantsIncludingThisOfType( fishbonesWellPaths );
-    for ( RimImportedFishboneLaterals* fbWellPath : fishbonesWellPaths )
-    {
-        if ( !fbWellPath->isChecked() ) continue;
-
-        std::vector<cvf::Vec3d> displayCoords =
-            displayCoordTransform->transformToDisplayCoords( fbWellPath->coordinates() );
-
-        cvf::ref<RivObjectSourceInfo> objectSourceInfo = new RivObjectSourceInfo( fbWellPath );
-
-        cvf::Collection<cvf::Part> parts;
-        geoGenerator.cylinderWithCenterLineParts( &parts,
-                                                  displayCoords,
-                                                  m_rimWellPath->wellPathColor(),
-                                                  m_rimWellPath->combinedScaleFactor() * characteristicCellSize * 0.5 );
-        for ( auto part : parts )
-        {
-            part->setSourceInfo( objectSourceInfo.p() );
-            model->addPart( part.p() );
         }
     }
 }
@@ -895,7 +859,6 @@ void RivWellPathPartMgr::appendStaticGeometryPartsToModel( cvf::ModelBasicList* 
     }
 
     appendFishboneSubsPartsToModel( model, displayCoordTransform, characteristicCellSize );
-    appendImportedFishbonesToModel( model, displayCoordTransform, characteristicCellSize );
     appendWellPathAttributesToModel( model, displayCoordTransform, characteristicCellSize );
 
     RimGridView* gridView = dynamic_cast<RimGridView*>( m_rimView.p() );

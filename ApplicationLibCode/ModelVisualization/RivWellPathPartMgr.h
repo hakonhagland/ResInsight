@@ -98,9 +98,6 @@ private:
                                         const caf::DisplayCoordTransform* displayCoordTransform,
                                         double                            characteristicCellSize );
 
-    void appendImportedFishbonesToModel( cvf::ModelBasicList*              model,
-                                         const caf::DisplayCoordTransform* displayCoordTransform,
-                                         double                            characteristicCellSize );
 
     void appendPerforationsToModel( cvf::ModelBasicList*              model,
                                     size_t                            timeStepIndex,

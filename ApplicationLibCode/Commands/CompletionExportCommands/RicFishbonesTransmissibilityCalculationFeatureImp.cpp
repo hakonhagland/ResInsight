@@ -30,14 +30,12 @@
 #include "RigCompletionData.h"
 #include "RigEclipseCaseData.h"
 #include "RigMainGrid.h"
+#include "RigWellLogExtractor.h"
 #include "RigWellPath.h"
 #include "RigWellPathIntersectionTools.h"
 
-#include "RigWellLogExtractor.h"
 #include "RimFishbones.h"
 #include "RimFishbonesCollection.h"
-#include "RimImportedFishboneLaterals.h"
-#include "RimImportedFishboneLateralsCollection.h"
 #include "RimWellPath.h"
 #include "RimWellPathCompletions.h"
 
@@ -98,7 +96,6 @@ std::vector<RigCompletionData>
     std::map<size_t, std::vector<WellBorePartForTransCalc>> wellBorePartsInCells; // wellBore = main bore or fishbone
                                                                                   // lateral
     findFishboneLateralsWellBoreParts( wellBorePartsInCells, wellPath, settings );
-    findFishboneImportedLateralsWellBoreParts( wellBorePartsInCells, wellPath, settings );
 
     const RigActiveCellInfo* activeCellInfo =
         settings.caseToApply->eclipseCaseData()->activeCellInfo( RiaDefines::PorosityModelType::MATRIX_MODEL );
@@ -297,56 +294,6 @@ void RicFishbonesTransmissibilityCalculationFeatureImp::findFishboneLateralsWell
             }
         }
     }
-}
-
-//--------------------------------------------------------------------------------------------------
-///
-//--------------------------------------------------------------------------------------------------
-void RicFishbonesTransmissibilityCalculationFeatureImp::findFishboneImportedLateralsWellBoreParts(
-    std::map<size_t, std::vector<WellBorePartForTransCalc>>& wellBorePartsInCells,
-    const RimWellPath*                                       wellPath,
-    const RicExportCompletionDataSettingsUi&                 settings )
-{
-    RiaDefines::EclipseUnitSystem unitSystem = settings.caseToApply->eclipseCaseData()->unitsType();
-
-    if ( !wellPath ) return;
-    if ( !wellPath->wellPathGeometry() ) return;
-
-    bool   isMainBore = false;
-    double holeRadius = wellPath->fishbonesCollection()->wellPathCollection()->holeDiameter( unitSystem ) / 2.0;
-    double skinFactor = wellPath->fishbonesCollection()->wellPathCollection()->skinFactor();
-
-    for ( const RimImportedFishboneLaterals* fishbonesPath :
-          wellPath->fishbonesCollection()->wellPathCollection()->wellPaths() )
-    {
-        if ( !fishbonesPath->isChecked() )
-        {
-            continue;
-        }
-
-        std::vector<WellPathCellIntersectionInfo> intersectedCells =
-            RigWellPathIntersectionTools::findCellIntersectionInfosAlongPath( settings.caseToApply->eclipseCaseData(),
-                                                                              wellPath->name(),
-                                                                              fishbonesPath->coordinates(),
-                                                                              fishbonesPath->measuredDepths() );
-
-        for ( const auto& cellIntersectionInfo : intersectedCells )
-        {
-            QString                  completionMetaData = fishbonesPath->name();
-            WellBorePartForTransCalc wellBorePart =
-                WellBorePartForTransCalc( cellIntersectionInfo.intersectionLengthsInCellCS,
-                                          holeRadius,
-                                          skinFactor,
-                                          isMainBore,
-                                          completionMetaData );
-            wellBorePart.intersectionWithWellMeasuredDepth = cellIntersectionInfo.startMD;
-
-            wellBorePartsInCells[cellIntersectionInfo.globCellIndex].push_back( wellBorePart );
-        }
-    }
-
-    // Note that it is not supported to export main bore perforation intervals for Imported Laterals, only for
-    // fishbones defined by ResInsight
 }
 
 //--------------------------------------------------------------------------------------------------
