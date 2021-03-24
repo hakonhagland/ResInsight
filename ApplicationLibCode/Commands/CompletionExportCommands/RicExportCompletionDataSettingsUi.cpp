@@ -121,6 +121,13 @@ RicExportCompletionDataSettingsUi::RicExportCompletionDataSettingsUi()
                        "" );
 
     CAF_PDM_InitField( &m_exportWelspec, "ExportWelspec", true, "Export WELSPEC keyword", "", "", "" );
+    CAF_PDM_InitField( &m_completionWelspecAfterMainBore,
+                       "CompletionWelspecAfterMainBore",
+                       false,
+                       "Completion Segments After Main Bore",
+                       "",
+                       "",
+                       "" );
 
     m_displayForSimWell = true;
 
@@ -215,6 +222,14 @@ bool RicExportCompletionDataSettingsUi::exportDataSourceAsComment() const
 bool RicExportCompletionDataSettingsUi::exportWelspec() const
 {
     return m_exportWelspec;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+bool RicExportCompletionDataSettingsUi::exportCompletionWelspecAfterMainBore() const
+{
+    return m_completionWelspecAfterMainBore();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -332,6 +347,7 @@ void RicExportCompletionDataSettingsUi::defineUiOrdering( QString uiConfigName, 
         group->add( &includeMsw );
         group->add( &m_exportDataSourceAsComment );
         group->add( &m_exportWelspec );
+        group->add( &m_completionWelspecAfterMainBore );
     }
 
     {

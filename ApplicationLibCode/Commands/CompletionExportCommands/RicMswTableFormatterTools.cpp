@@ -35,7 +35,8 @@
 //--------------------------------------------------------------------------------------------------
 void RicMswTableFormatterTools::generateWelsegsTable( RifTextDataTableFormatter& formatter,
                                                       RicMswExportInfo&          exportInfo,
-                                                      double                     maxSegmentLength )
+                                                      double                     maxSegmentLength,
+                                                      bool                       exportCompletionSegmentsAfterMainBore )
 {
     formatter.keyword( "WELSEGS" );
 
@@ -84,6 +85,7 @@ void RicMswTableFormatterTools::generateWelsegsTable( RifTextDataTableFormatter&
                                      exportInfo.mainBoreBranch(),
                                      &segmentNumber,
                                      maxSegmentLength,
+                                     exportCompletionSegmentsAfterMainBore,
                                      parentSegment );
 
     formatter.tableCompleted();
@@ -97,7 +99,8 @@ void RicMswTableFormatterTools::writeWelsegsSegmentsRecursively( RifTextDataTabl
                                                                  gsl::not_null<RicMswBranch*> branch,
                                                                  gsl::not_null<int*>          segmentNumber,
                                                                  double                       maxSegmentLength,
-                                                                 RicMswSegment*               connectedToSegment )
+                                                                 bool           exportCompletionSegmentsAfterMainBore,
+                                                                 RicMswSegment* connectedToSegment )
 {
     auto outletSegment = connectedToSegment;
 
@@ -118,6 +121,7 @@ void RicMswTableFormatterTools::writeWelsegsSegmentsRecursively( RifTextDataTabl
 
     formatter.addOptionalComment( QString( "Segments on branch %1" ).arg( branch->label() ) );
 
+    auto branchStartSegmentIterator = it;
     for ( ; it != branchSegments.end(); ++it )
     {
         auto segment = *it;
@@ -132,28 +136,21 @@ void RicMswTableFormatterTools::writeWelsegsSegmentsRecursively( RifTextDataTabl
         writeWelsegsSegment( segment, outletSegment, formatter, exportInfo, maxSegmentLength, branch, segmentNumber );
         outletSegment = segment;
 
-        for ( auto& completion : segment->completions() )
+        if ( !exportCompletionSegmentsAfterMainBore )
         {
-            // For a well with perforation intervals, the WELSEGS segments are reported twice if if we include the
-            // RicMswPerforation completions. Investigate when this class is intended to be exported to file
-            auto performationMsw = dynamic_cast<RicMswPerforation*>( completion );
-            if ( performationMsw ) continue;
+            writeCompletionsForSegment( outletSegment, segment, &outletValve, formatter, exportInfo, maxSegmentLength, segmentNumber );
+        }
+    }
 
-            auto segmentValve = dynamic_cast<RicMswValve*>( completion );
-            auto fishboneIcd  = dynamic_cast<RicMswFishbonesICD*>( completion );
-            if ( !fishboneIcd && segmentValve != nullptr )
-            {
-                writeValveWelsegsSegment( segment, segmentValve, formatter, exportInfo, maxSegmentLength, segmentNumber );
-                outletValve   = segmentValve;
-                outletSegment = segment;
-            }
-            else
-            {
-                // If we have a valve, the outlet segment is the valve's segment
-                RicMswSegment* outletSegment =
-                    outletValve && outletValve->segmentCount() > 0 ? outletValve->segments().front() : segment;
-                writeCompletionWelsegsSegments( outletSegment, completion, formatter, exportInfo, maxSegmentLength, segmentNumber );
-            }
+    if ( exportCompletionSegmentsAfterMainBore )
+    {
+        it = branchStartSegmentIterator;
+
+        for ( ; it != branchSegments.end(); ++it )
+        {
+            auto segment = *it;
+
+            writeCompletionsForSegment( outletSegment, segment, &outletValve, formatter, exportInfo, maxSegmentLength, segmentNumber );
         }
     }
 
@@ -169,6 +166,7 @@ void RicMswTableFormatterTools::writeWelsegsSegmentsRecursively( RifTextDataTabl
                                          childBranch,
                                          segmentNumber,
                                          maxSegmentLength,
+                                         exportCompletionSegmentsAfterMainBore,
                                          outletSegmentForChildBranch );
     }
 }
@@ -879,6 +877,42 @@ void RicMswTableFormatterTools::writeCompletionWelsegsSegments( gsl::not_null<co
             {
                 writeCompletionWelsegsSegments( completionSegment, comp, formatter, exportInfo, maxSegmentLength, segmentNumber );
             }
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RicMswTableFormatterTools::writeCompletionsForSegment( gsl::not_null<const RicMswSegment*> outletSegment,
+                                                            gsl::not_null<RicMswSegment*>       segment,
+                                                            RicMswValve**                       outletValve,
+                                                            RifTextDataTableFormatter&          formatter,
+                                                            RicMswExportInfo&                   exportInfo,
+                                                            double                              maxSegmentLength,
+                                                            int*                                segmentNumber )
+{
+    for ( auto& completion : segment->completions() )
+    {
+        // For a well with perforation intervals, the WELSEGS segments are reported twice if if we include the
+        // RicMswPerforation completions. Investigate when this class is intended to be exported to file
+        auto performationMsw = dynamic_cast<RicMswPerforation*>( completion );
+        if ( performationMsw ) continue;
+
+        auto segmentValve = dynamic_cast<RicMswValve*>( completion );
+        auto fishboneIcd  = dynamic_cast<RicMswFishbonesICD*>( completion );
+        if ( !fishboneIcd && segmentValve != nullptr )
+        {
+            writeValveWelsegsSegment( segment, segmentValve, formatter, exportInfo, maxSegmentLength, segmentNumber );
+            *outletValve = segmentValve;
+        }
+        else
+        {
+            // If we have a valve, the outlet segment is the valve's segment
+            RicMswSegment* outletSegment = *outletValve && ( *outletValve )->segmentCount() > 0
+                                               ? ( *outletValve )->segments().front()
+                                               : segment.get();
+            writeCompletionWelsegsSegments( outletSegment, completion, formatter, exportInfo, maxSegmentLength, segmentNumber );
         }
     }
 }

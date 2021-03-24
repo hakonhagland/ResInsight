@@ -51,13 +51,17 @@ public:
     }
 };
 
-void generateWelsegsTable( RifTextDataTableFormatter& formatter, RicMswExportInfo& exportInfo, double maxSegmentLength );
+void generateWelsegsTable( RifTextDataTableFormatter& formatter,
+                           RicMswExportInfo&          exportInfo,
+                           double                     maxSegmentLength,
+                           bool                       exportCompletionSegmentsAfterMainBore );
 
 void writeWelsegsSegmentsRecursively( RifTextDataTableFormatter&   formatter,
                                       RicMswExportInfo&            exportInfo,
                                       gsl::not_null<RicMswBranch*> branch,
                                       gsl::not_null<int*>          segmentNumber,
                                       double                       maxSegmentLength,
+                                      bool                         exportCompletionSegmentsAfterMainBore,
                                       RicMswSegment*               connectedToSegment );
 
 void writeWelsegsSegment( RicMswSegment*               segment,
@@ -67,12 +71,14 @@ void writeWelsegsSegment( RicMswSegment*               segment,
                           double                       maxSegmentLength,
                           gsl::not_null<RicMswBranch*> branch,
                           int*                         segmentNumber );
+
 void writeValveWelsegsSegment( const RicMswSegment*       outletSegment,
                                RicMswValve*               valve,
                                RifTextDataTableFormatter& formatter,
                                RicMswExportInfo&          exportInfo,
                                double                     maxSegmentLength,
                                int*                       segmentNumber );
+
 void writeCompletionWelsegsSegments( gsl::not_null<const RicMswSegment*>    outletSegment,
                                      gsl::not_null<const RicMswCompletion*> completion,
                                      RifTextDataTableFormatter&             formatter,
@@ -80,9 +86,19 @@ void writeCompletionWelsegsSegments( gsl::not_null<const RicMswSegment*>    outl
                                      double                                 maxSegmentLength,
                                      int*                                   segmentNumber );
 
+void writeCompletionsForSegment( gsl::not_null<const RicMswSegment*> outletSegment,
+                                 gsl::not_null<RicMswSegment*>       segment,
+                                 RicMswValve**                       outletValve,
+                                 RifTextDataTableFormatter&          formatter,
+                                 RicMswExportInfo&                   exportInfo,
+                                 double                              maxSegmentLength,
+                                 int*                                segmentNumber );
+
 void writeWelsegsCompletionCommentHeader( RifTextDataTableFormatter&        formatter,
                                           RigCompletionData::CompletionType completionType );
+
 void generateCompsegTables( RifTextDataTableFormatter& formatter, RicMswExportInfo& exportInfo );
+
 void generateCompsegTable( RifTextDataTableFormatter&                                 formatter,
                            RicMswExportInfo&                                          exportInfo,
                            gsl::not_null<const RicMswBranch*>                         branch,
@@ -90,12 +106,14 @@ void generateCompsegTable( RifTextDataTableFormatter&                           
                            const std::set<RigCompletionData::CompletionType>&         exportCompletionTypes,
                            gsl::not_null<bool*>                                       headerGenerated,
                            gsl::not_null<std::set<cvf::Vec3st, CvfVec3stComparator>*> intersectedCells );
+
 void generateCompsegHeader( RifTextDataTableFormatter&        formatter,
                             RicMswExportInfo&                 exportInfo,
                             RigCompletionData::CompletionType completionType,
                             bool                              exportSubGridIntersections );
 
 void generateWsegvalvTable( RifTextDataTableFormatter& formatter, RicMswExportInfo& exportInfo );
+
 void generateWsegvalvTableRecursively( RifTextDataTableFormatter&   formatter,
                                        gsl::not_null<RicMswBranch*> branch,
                                        bool&                        isHeaderWritten,

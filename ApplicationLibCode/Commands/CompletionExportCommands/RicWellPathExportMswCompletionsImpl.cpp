@@ -128,7 +128,8 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForAllCompletions(
                                                perforationsExportFile,
                                                wellPath,
                                                exportSettings.timeStep,
-                                               exportSettings.exportDataSourceAsComment() );
+                                               exportSettings.exportDataSourceAsComment(),
+                                               exportSettings.exportCompletionWelspecAfterMainBore() );
         }
 
         if ( exportFractures )
@@ -148,7 +149,8 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForAllCompletions(
             exportWellSegmentsForFractures( exportSettings.caseToApply,
                                             fractureExportFile,
                                             wellPath,
-                                            exportSettings.exportDataSourceAsComment() );
+                                            exportSettings.exportDataSourceAsComment(),
+                                            exportSettings.exportCompletionWelspecAfterMainBore() );
         }
 
         if ( exportFishbones )
@@ -168,7 +170,8 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForAllCompletions(
             exportWellSegmentsForFishbones( exportSettings.caseToApply,
                                             fishbonesExportFile,
                                             wellPath,
-                                            exportSettings.exportDataSourceAsComment() );
+                                            exportSettings.exportDataSourceAsComment(),
+                                            exportSettings.exportCompletionWelspecAfterMainBore() );
         }
     }
 }
@@ -180,7 +183,8 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForPerforations( Rim
                                                                              std::shared_ptr<QFile> exportFile,
                                                                              const RimWellPath*     wellPath,
                                                                              int                    timeStep,
-                                                                             bool exportDataSourceAsComment )
+                                                                             bool exportDataSourceAsComment,
+                                                                             bool completionSegmentsAfterMainBore )
 {
     RiaDefines::EclipseUnitSystem unitSystem = eclipseCase->eclipseCaseData()->unitsType();
 
@@ -219,7 +223,10 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForPerforations( Rim
 
         double maxSegmentLength = mswParameters->maxSegmentLength();
 
-        RicMswTableFormatterTools::generateWelsegsTable( formatter, exportInfo, maxSegmentLength );
+        RicMswTableFormatterTools::generateWelsegsTable( formatter,
+                                                         exportInfo,
+                                                         maxSegmentLength,
+                                                         completionSegmentsAfterMainBore );
         RicMswTableFormatterTools::generateCompsegTables( formatter, exportInfo );
         RicMswTableFormatterTools::generateWsegvalvTable( formatter, exportInfo );
         RicMswTableFormatterTools::generateWsegAicdTable( formatter, exportInfo );
@@ -232,7 +239,8 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForPerforations( Rim
 void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForFractures( RimEclipseCase*        eclipseCase,
                                                                           std::shared_ptr<QFile> exportFile,
                                                                           const RimWellPath*     wellPath,
-                                                                          bool exportDataSourceAsComment )
+                                                                          bool exportDataSourceAsComment,
+                                                                          bool completionSegmentsAfterMainBore )
 {
     RiaDefines::EclipseUnitSystem unitSystem = eclipseCase->eclipseCaseData()->unitsType();
 
@@ -277,7 +285,7 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForFractures( RimEcl
 
     double maxSegmentLength = wellPath->fractureCollection()->mswParameters()->maxSegmentLength();
 
-    RicMswTableFormatterTools::generateWelsegsTable( formatter, exportInfo, maxSegmentLength );
+    RicMswTableFormatterTools::generateWelsegsTable( formatter, exportInfo, maxSegmentLength, completionSegmentsAfterMainBore );
     RicMswTableFormatterTools::generateCompsegTables( formatter, exportInfo );
 }
 
@@ -287,7 +295,8 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForFractures( RimEcl
 void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForFishbones( RimEclipseCase*        eclipseCase,
                                                                           std::shared_ptr<QFile> exportFile,
                                                                           const RimWellPath*     wellPath,
-                                                                          bool exportDataSourceAsComment )
+                                                                          bool exportDataSourceAsComment,
+                                                                          bool completionSegmentsAfterMainBore )
 {
     auto fishbonesSubs = wellPath->fishbonesCollection()->activeFishbonesSubs();
 
@@ -332,7 +341,7 @@ void RicWellPathExportMswCompletionsImpl::exportWellSegmentsForFishbones( RimEcl
 
     double maxSegmentLength = wellPath->fishbonesCollection()->mswParameters()->maxSegmentLength();
 
-    RicMswTableFormatterTools::generateWelsegsTable( formatter, exportInfo, maxSegmentLength );
+    RicMswTableFormatterTools::generateWelsegsTable( formatter, exportInfo, maxSegmentLength, completionSegmentsAfterMainBore );
     RicMswTableFormatterTools::generateCompsegTables( formatter, exportInfo );
     RicMswTableFormatterTools::generateWsegvalvTable( formatter, exportInfo );
 }
@@ -500,7 +509,7 @@ void RicWellPathExportMswCompletionsImpl::generateFishbonesMswExportInfo(
         }
     }
     exportInfo->setHasSubGridIntersections( exportInfo->hasSubGridIntersections() || foundSubGridIntersections );
-    branch->sortSegments();
+    // branch->sortSegments();
 
     std::vector<RimModeledWellPath*> connectedWellPaths = wellPathsWithTieIn( wellPath );
     for ( auto childWellPath : connectedWellPaths )

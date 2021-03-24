@@ -51,18 +51,21 @@ public:
     static void exportWellSegmentsForFractures( RimEclipseCase*        eclipseCase,
                                                 std::shared_ptr<QFile> exportFile,
                                                 const RimWellPath*     wellPath,
-                                                bool                   exportDataSourceAsComment );
+                                                bool                   exportDataSourceAsComment,
+                                                bool                   completionSegmentsAfterMainBore );
 
     static void exportWellSegmentsForFishbones( RimEclipseCase*        eclipseCase,
                                                 std::shared_ptr<QFile> exportFile,
                                                 const RimWellPath*     wellPath,
-                                                bool                   exportDataSourceAsComment );
+                                                bool                   exportDataSourceAsComment,
+                                                bool                   completionSegmentsAfterMainBore );
 
     static void exportWellSegmentsForPerforations( RimEclipseCase*        eclipseCase,
                                                    std::shared_ptr<QFile> exportFile,
                                                    const RimWellPath*     wellPath,
                                                    int                    timeStep,
-                                                   bool                   exportDataSourceAsComment );
+                                                   bool                   exportDataSourceAsComment,
+                                                   bool                   completionSegmentsAfterMainBore );
 
     static void generateFishbonesMswExportInfoForWell( const RimEclipseCase*            eclipseCase,
                                                        const RimWellPath*               wellPath,
