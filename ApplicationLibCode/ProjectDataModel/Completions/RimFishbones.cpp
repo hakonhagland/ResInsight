@@ -640,13 +640,13 @@ void RimFishbones::defineUiOrdering( QString uiConfigName, caf::PdmUiOrdering& u
     }
 
     {
-        caf::PdmUiGroup* wellGroup = uiOrdering.addNewGroup( "Well Properties" );
+        caf::PdmUiGroup* wellGroup = uiOrdering.addNewGroup( "Lateral Properties" );
 
         m_pipeProperties->uiOrdering( uiConfigName, *wellGroup );
     }
 
     {
-        caf::PdmUiGroup* mswGroup = uiOrdering.addNewGroup( "Multi Segment Wells" );
+        caf::PdmUiGroup* mswGroup = uiOrdering.addNewGroup( "Lateral Multi Segment Wells" );
         mswGroup->setCollapsedByDefault( true );
         mswGroup->add( &m_lateralTubingDiameter );
         mswGroup->add( &m_lateralOpenHoleRoghnessFactor );
