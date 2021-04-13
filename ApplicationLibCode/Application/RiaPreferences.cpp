@@ -414,12 +414,15 @@ RiaPreferences::RiaPreferences()
     CAF_PDM_InitFieldNoDefault( &m_guiTheme, "guiTheme", "GUI theme", "", "", "" );
 
     CAF_PDM_InitFieldNoDefault( &m_geomechFRAPreprocCommand, "geomechFRAPreprocCommand", "Pre-Processing Command", "", "", "" );
+    m_geomechFRAPreprocCommand.uiCapability()->setUiEditorTypeName( caf::PdmUiFilePathEditor::uiEditorTypeName() );
     m_geomechFRAPreprocCommand.uiCapability()->setUiLabelPosition( caf::PdmUiItemInfo::TOP );
 
     CAF_PDM_InitFieldNoDefault( &m_geomechFRAPostprocCommand, "geomechFRAPostprocCommand", "Post-Processing Command", "", "", "" );
+    m_geomechFRAPostprocCommand.uiCapability()->setUiEditorTypeName( caf::PdmUiFilePathEditor::uiEditorTypeName() );
     m_geomechFRAPostprocCommand.uiCapability()->setUiLabelPosition( caf::PdmUiItemInfo::TOP );
 
     CAF_PDM_InitFieldNoDefault( &m_geomechFRAMacrisCommand, "geomechFRAMacrisCommand", "Main Macris Command", "", "", "" );
+    m_geomechFRAMacrisCommand.uiCapability()->setUiEditorTypeName( caf::PdmUiFilePathEditor::uiEditorTypeName() );
     m_geomechFRAMacrisCommand.uiCapability()->setUiLabelPosition( caf::PdmUiItemInfo::TOP );
 
     CAF_PDM_InitFieldNoDefault( &m_geomechFRADefaultXML, "geomechFRADefaultXML", "Default Parameter XML File", "", "", "" );
