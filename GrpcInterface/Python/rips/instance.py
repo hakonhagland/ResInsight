@@ -594,9 +594,7 @@ class Instance:
             height    | Height in pixels | Integer
         """
         return self.__execute_command(
-            setSnapshotSize=Commands_pb2.SetWindowSizeParams(
-                width=width, height=height
-            )
+            setSnapshotSize=Commands_pb2.SetWindowSizeParams(width=width, height=height)
         )
 
     def major_version(self) -> int:
