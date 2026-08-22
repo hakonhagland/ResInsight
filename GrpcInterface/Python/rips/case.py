@@ -35,41 +35,54 @@ result
 
 """
 
-import grpc
 import uuid
-from typing import Any, Iterable, Iterator, List, Optional, Tuple, Union
+from collections.abc import Iterable, Iterator
+from typing import Any
 
 import Case_pb2
 import Case_pb2_grpc
 import Commands_pb2 as Cmd
-import PdmObject_pb2 as PdmObject_pb2
 import Definitions_pb2
-
-import Properties_pb2
-import Properties_pb2_grpc
+import grpc
 import NNCProperties_pb2
 import NNCProperties_pb2_grpc
-from .resinsight_classes import (
-    Case as Case,
-    EclipseCase as EclipseCase,
-    GeoMechCase as GeoMechCase,
-    PorosityModelType as PorosityModelType,
-    Reservoir as Reservoir,
-    WellBoreStabilityPlot as WellBoreStabilityPlot,
-    WbsParameters as WbsParameters,
-)
+import PdmObject_pb2 as PdmObject_pb2
+import Properties_pb2
+import Properties_pb2_grpc
 
+import rips.project  # full name import due to circular dependency
+
+from .enums import (
+    PropertyDataType,
+    PropertyType,
+)
 from .exception import RipsError
 from .grid import Grid as Grid
-from .project import Project as Project
 from .pdmobject import add_method
-from .view import View as View
-from .simulation_well import SimulationWell
-from .enums import (
-    PropertyType,
-    PropertyDataType,
+from .project import Project as Project
+from .resinsight_classes import (
+    Case as Case,
 )
-import rips.project  # full name import due to circular dependency
+from .resinsight_classes import (
+    EclipseCase as EclipseCase,
+)
+from .resinsight_classes import (
+    GeoMechCase as GeoMechCase,
+)
+from .resinsight_classes import (
+    PorosityModelType as PorosityModelType,
+)
+from .resinsight_classes import (
+    Reservoir as Reservoir,
+)
+from .resinsight_classes import (
+    WbsParameters as WbsParameters,
+)
+from .resinsight_classes import (
+    WellBoreStabilityPlot as WellBoreStabilityPlot,
+)
+from .simulation_well import SimulationWell
+from .view import View as View
 
 
 @add_method(Case)
@@ -104,7 +117,7 @@ def __request(self) -> Case_pb2.CaseRequest:
 @add_method(Case)
 def __generate_property_input_iterator(
     self,
-    values_iterator: Iterable[List[float]],
+    values_iterator: Iterable[list[float]],
     parameters: Properties_pb2.PropertyRequest,
 ) -> Iterator[Properties_pb2.PropertyInputChunk]:
     chunk = Properties_pb2.PropertyInputChunk()
@@ -119,7 +132,7 @@ def __generate_property_input_iterator(
 
 @add_method(Case)
 def __generate_property_input_chunks(
-    self, array: List[float], parameters: Properties_pb2.PropertyRequest
+    self, array: list[float], parameters: Properties_pb2.PropertyRequest
 ) -> Iterator[Properties_pb2.PropertyInputChunk]:
     index = -1
     while index < len(array):
@@ -156,14 +169,14 @@ def grid(self, index: int = 0) -> Grid:
 
 
 @add_method(Case)
-def grids(self) -> List[Grid]:
+def grids(self) -> list[Grid]:
     """Get a list of all rips Grid objects in the case
 
     Returns:
         List of :class:`rips.grid.Grid`
     """
     grid_list = []
-    for i in range(0, self.__grid_count()):
+    for i in range(self.__grid_count()):
         grid_list.append(Grid(i, self, self.channel()))
     return grid_list
 
@@ -237,7 +250,7 @@ def cell_info_for_active_cells_async(
 @add_method(Case)
 def cell_info_for_active_cells(
     self, porosity_model: PorosityModelType = PorosityModelType.MATRIX_MODEL
-) -> List[Case_pb2.CellInfo]:
+) -> list[Case_pb2.CellInfo]:
     """Get list of cell info objects for current case
 
     Arguments:
@@ -277,7 +290,7 @@ def cell_info_for_active_cells(
 
 
 @add_method(Case)
-def time_steps(self) -> List[Case_pb2.TimeStepDate]:
+def time_steps(self) -> list[Case_pb2.TimeStepDate]:
     """Get a list containing all time steps
 
     The time steps are defined by the class **TimeStepDate**
@@ -324,7 +337,7 @@ def reservoir_boundingbox(self) -> Case_pb2.BoundingBox:
 @add_method(Case)
 def distance_to_closest_fault(
     self, x: float, y: float, z: float
-) -> Tuple[str, float, str]:
+) -> tuple[str, float, str]:
     """Find the closest fault to the given point and return the distance, fault name and fault face"""
     request = Case_pb2.ClosestFaultRequest(
         case_request=self.__request(), point=Definitions_pb2.Vec3d(x=x, y=y, z=z)
@@ -335,7 +348,7 @@ def distance_to_closest_fault(
 
 
 @add_method(Case)
-def reservoir_depth_range(self) -> Tuple[float, float]:
+def reservoir_depth_range(self) -> tuple[float, float]:
     """Get the reservoir depth range
 
     Returns:
@@ -346,13 +359,13 @@ def reservoir_depth_range(self) -> Tuple[float, float]:
 
 
 @add_method(Case)
-def days_since_start(self) -> List[float]:
+def days_since_start(self) -> list[float]:
     """Get a list of decimal values representing days since the start of the simulation"""
     return self.__case_stub.GetDaysSinceStart(self.__request()).day_decimals
 
 
 @add_method(Case)
-def view(self, view_id: int) -> Optional[View]:
+def view(self, view_id: int) -> View | None:
     """Get a particular view belonging to a case by providing view id
 
     Arguments:
@@ -370,7 +383,7 @@ def view(self, view_id: int) -> Optional[View]:
 
 
 @add_method(Case)
-def views(self) -> List[View]:
+def views(self) -> list[View]:
     """Get all views of a case
 
     Returns:
@@ -386,7 +399,7 @@ def views(self) -> List[View]:
 
 
 @add_method(Case)
-def create_view(self) -> Optional[View]:
+def create_view(self) -> View | None:
     """Create a new view in the current case
 
     Returns:
@@ -425,7 +438,7 @@ def export_snapshots_of_all_views(
 def export_well_path_completions(
     self,
     time_step: int,
-    well_path_names: Union[str, List[str]],
+    well_path_names: str | list[str],
     file_split: str,
     compdat_export: str = "TRANSMISSIBILITIES",
     include_perforations: bool = True,
@@ -504,7 +517,7 @@ def export_msw(self, well_path: str) -> Any:
 def create_multiple_fractures(
     self,
     template_id: int,
-    well_path_names: Union[str, List[str]],
+    well_path_names: str | list[str],
     min_dist_from_well_td: float,
     max_fractures_per_well: int,
     top_layer: int,
@@ -550,7 +563,7 @@ def create_multiple_fractures(
 def create_lgr_for_completion(
     self,
     time_step: int,
-    well_path_names: Union[str, List[str]],
+    well_path_names: str | list[str],
     refinement_i: int,
     refinement_j: int,
     refinement_k: int,
@@ -608,9 +621,9 @@ def create_saturation_pressure_plots(self) -> Any:
 @add_method(Case)
 def export_flow_characteristics(
     self,
-    time_steps: Union[int, List[int]],
-    injectors: Union[str, List[str]],
-    producers: Union[str, List[str]],
+    time_steps: int | list[int],
+    injectors: str | list[str],
+    producers: str | list[str],
     file_name: str,
     minimum_communication: float = 0.0,
     aquifer_cell_threshold: float = 0.1,
@@ -653,7 +666,7 @@ def available_properties(
     self,
     property_type: PropertyType,
     porosity_model: PorosityModelType = PorosityModelType.MATRIX_MODEL,
-) -> List[str]:
+) -> list[str]:
     """Get a list of available properties
 
     For argument details, see :ref:`Result Definition <result-definition-label>`
@@ -713,7 +726,7 @@ def active_cell_property(
     property_name: str,
     time_step: int,
     porosity_model: PorosityModelType = PorosityModelType.MATRIX_MODEL,
-) -> List[float]:
+) -> list[float]:
     """Get a cell property for all active cells. Sync, so returns a list. For argument details, see :ref:`Result Definition <result-definition-label>`
 
     Arguments:
@@ -776,7 +789,7 @@ def selected_cell_property(
     property_name: str,
     time_step: int,
     porosity_model: PorosityModelType = PorosityModelType.MATRIX_MODEL,
-) -> List[float]:
+) -> list[float]:
     """Get a cell property for all selected cells. Sync, so returns a list. For argument details, see :ref:`Result Definition <result-definition-label>`
 
     Arguments:
@@ -843,7 +856,7 @@ def grid_property(
     time_step: int,
     grid_index: int = 0,
     porosity_model: PorosityModelType = PorosityModelType.MATRIX_MODEL,
-) -> List[float]:
+) -> list[float]:
     """Get a cell property for all grid cells. Synchronous, so returns a list. For argument details, see :ref:`Result Definition <result-definition-label>`
 
     Arguments:
@@ -869,7 +882,7 @@ def grid_property(
 @add_method(Case)
 def set_active_cell_property_async(
     self,
-    values_iterator: Iterable[List[float]],
+    values_iterator: Iterable[list[float]],
     property_type: PropertyType,
     property_name: str,
     time_step: int,
@@ -905,7 +918,7 @@ def set_active_cell_property_async(
 @add_method(Case)
 def set_active_cell_property(
     self,
-    values: List[float],
+    values: list[float],
     property_type: PropertyType,
     property_name: str,
     time_step: int,
@@ -942,7 +955,7 @@ def set_active_cell_property(
 @add_method(Case)
 def set_grid_property(
     self,
-    values: List[float],
+    values: list[float],
     property_type: PropertyType,
     property_name: str,
     time_step: int,
@@ -1014,8 +1027,8 @@ def create_well_bore_stability_plot(
     self,
     well_path: str,
     time_step: int,
-    parameters: Optional[WbsParameters] = None,
-) -> Optional[WellBoreStabilityPlot]:
+    parameters: WbsParameters | None = None,
+) -> WellBoreStabilityPlot | None:
     """Create a new well bore stability plot
 
     Arguments:
@@ -1045,7 +1058,7 @@ def create_well_bore_stability_plot(
 
 @add_method(Case)
 def import_formation_names(
-    self, formation_files: Optional[Union[str, List[str]]] = None
+    self, formation_files: str | list[str] | None = None
 ) -> None:
     """Import formation names into project and apply it to the current case
 
@@ -1066,7 +1079,7 @@ def import_formation_names(
 
 
 @add_method(Case)
-def simulation_wells(self) -> List[SimulationWell]:
+def simulation_wells(self) -> list[SimulationWell]:
     """Get a list of all simulation wells for a case
 
     Returns:
@@ -1102,7 +1115,7 @@ def active_cell_centers_async(
 @add_method(Case)
 def active_cell_centers(
     self, porosity_model: PorosityModelType = PorosityModelType.MATRIX_MODEL
-) -> List[Definitions_pb2.Vec3d]:
+) -> list[Definitions_pb2.Vec3d]:
     """Get a cell centers for all active cells. Synchronous, so returns a list.
 
     Arguments:
@@ -1142,7 +1155,7 @@ def active_cell_corners_async(
 @add_method(Case)
 def active_cell_corners(
     self, porosity_model: PorosityModelType = PorosityModelType.MATRIX_MODEL
-) -> List[Definitions_pb2.CellCorners]:
+) -> list[Definitions_pb2.CellCorners]:
     """Get a cell corners for all active cells. Synchronous, so returns a list.
 
         Arguments:
@@ -1183,7 +1196,7 @@ def selected_cells_async(self) -> Iterator[Case_pb2.SelectedCells]:
 
 
 @add_method(Case)
-def selected_cells(self) -> List[Case_pb2.SelectedCell]:
+def selected_cells(self) -> list[Case_pb2.SelectedCell]:
     """Get the selected cells. Synchronous, so returns a list.
 
     Returns:
@@ -1198,7 +1211,7 @@ def selected_cells(self) -> List[Case_pb2.SelectedCell]:
 
 
 @add_method(Case)
-def coarsening_info(self) -> List[Case_pb2.CoarseningInfo]:
+def coarsening_info(self) -> list[Case_pb2.CoarseningInfo]:
     """Get a coarsening information for all grids in the case.
 
     Returns:
@@ -1209,7 +1222,7 @@ def coarsening_info(self) -> List[Case_pb2.CoarseningInfo]:
 
 
 @add_method(Case)
-def available_nnc_properties(self) -> List[NNCProperties_pb2.AvailableNNCProperty]:
+def available_nnc_properties(self) -> list[NNCProperties_pb2.AvailableNNCProperty]:
     """Get a list of available NNC properties
 
     **NNCConnection class description**::
@@ -1239,7 +1252,7 @@ def nnc_connections_async(self) -> Iterator[NNCProperties_pb2.NNCConnections]:
 
 
 @add_method(Case)
-def nnc_connections(self) -> List[NNCProperties_pb2.NNCConnection]:
+def nnc_connections(self) -> list[NNCProperties_pb2.NNCConnection]:
     """Get the NNC connection. Synchronous, so returns a list.
 
     Returns:
@@ -1269,7 +1282,7 @@ def __nnc_connections_values_async(
 @add_method(Case)
 def __nnc_values_generator_to_list(
     self, generator: Iterable[NNCProperties_pb2.NNCValues]
-) -> List[float]:
+) -> list[float]:
     """Converts a NNC values generator to a list."""
     vals = []
     for chunk in generator:
@@ -1297,7 +1310,7 @@ def nnc_connections_static_values_async(
 
 
 @add_method(Case)
-def nnc_connections_static_values(self, property_name: str) -> List[float]:
+def nnc_connections_static_values(self, property_name: str) -> list[float]:
     """Get the static NNC values.
 
     Returns:
@@ -1330,7 +1343,7 @@ def nnc_connections_dynamic_values_async(
 @add_method(Case)
 def nnc_connections_dynamic_values(
     self, property_name: str, time_step: int
-) -> List[float]:
+) -> list[float]:
     """Get the dynamic NNC values.
 
     Returns:
@@ -1363,7 +1376,7 @@ def nnc_connections_generated_values_async(
 @add_method(Case)
 def nnc_connections_generated_values(
     self, property_name: str, time_step: int
-) -> List[float]:
+) -> list[float]:
     """Get the generated NNC values.
 
     Returns:
@@ -1377,7 +1390,7 @@ def nnc_connections_generated_values(
 
 @add_method(Case)
 def __generate_nnc_property_input_chunks(
-    self, array: List[float], parameters: NNCProperties_pb2.NNCValuesInputRequest
+    self, array: list[float], parameters: NNCProperties_pb2.NNCValuesInputRequest
 ) -> Iterator[NNCProperties_pb2.NNCValuesChunk]:
     index = -1
     while index < len(array):
@@ -1403,7 +1416,7 @@ def __generate_nnc_property_input_chunks(
 @add_method(Case)
 def set_nnc_connections_values(
     self,
-    values: List[float],
+    values: list[float],
     property_name: str,
     time_step: int,
     porosity_model: PorosityModelType = PorosityModelType.MATRIX_MODEL,
@@ -1432,12 +1445,12 @@ def set_nnc_connections_values(
 @add_method(Reservoir)
 def grid_property_for_positions(
     self,
-    positions: List[List[float]],
+    positions: list[list[float]],
     property_type: PropertyType,
     property_name: str,
     time_step: int,
     porosity_model: PorosityModelType = PorosityModelType.MATRIX_MODEL,
-) -> List[float]:
+) -> list[float]:
     shared_uuid = uuid.uuid4()
     coordinate_x = "{}_{}".format(shared_uuid, "coordinate_x")
     coordinate_y = "{}_{}".format(shared_uuid, "coordinate_y")
@@ -1484,7 +1497,7 @@ def grid_property_for_positions(
 @add_method(Reservoir)
 def export_corner_point_grid(
     self,
-) -> Tuple[List[float], List[float], List[int], int, int, int]:
+) -> tuple[list[float], list[float], list[int], int, int, int]:
     """Export corner point grid data from case
 
     Returns:
@@ -1534,9 +1547,9 @@ def replace_corner_point_grid(
     nx: int,
     ny: int,
     nz: int,
-    coord: List[float],
-    zcorn: List[float],
-    actnum: List[int],
+    coord: list[float],
+    zcorn: list[float],
+    actnum: list[int],
 ):
     """Replace the current case grid with new corner point grid geometry
 
@@ -1582,7 +1595,7 @@ def replace_corner_point_grid(
 
 
 @add_method(EclipseCase)
-def filtered_cells(self, filter, time_step: int = 0, grid_index: int = 0) -> List[int]:
+def filtered_cells(self, filter, time_step: int = 0, grid_index: int = 0) -> list[int]:
     """Apply a cell filter to this case and return a per-cell 0/1 mask.
 
     The returned list has the same length and ordering as
