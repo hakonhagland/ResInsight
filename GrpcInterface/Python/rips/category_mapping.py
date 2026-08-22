@@ -8,16 +8,14 @@ as the default legend for the (case, resultName) pair. When the property is
 shown in a 3D view, the legend's item names are used as the category labels.
 """
 
-from typing import Dict, List, Optional
 
 from .pdmobject import add_method
 from .project import Project
 from .resinsight_classes import Case, ColorLegend
 
-
 # Palette of distinct colors used when the caller does not supply colors.
 # Mirrors RiaColorTables::categoryColors() in the C++ code.
-_DEFAULT_PALETTE: List[str] = [
+_DEFAULT_PALETTE: list[str] = [
     "#803e75",
     "#d41c84",
     "#f6768e",
@@ -45,10 +43,10 @@ _DEFAULT_PALETTE: List[str] = [
 def set_discrete_property_category_names(
     self: Case,
     property_name: str,
-    value_names: Dict[int, str],
-    value_colors: Optional[Dict[int, str]] = None,
-    legend_name: Optional[str] = None,
-) -> Optional[ColorLegend]:
+    value_names: dict[int, str],
+    value_colors: dict[int, str] | None = None,
+    legend_name: str | None = None,
+) -> ColorLegend | None:
     """Bind integer values of a discrete grid property to text labels.
 
     Use this after uploading a discrete property via set_grid_property(...,
