@@ -348,11 +348,28 @@ RimSummaryMultiPlot* createAndAppendSingleSummaryMultiPlotNoAutoSettings( RimSum
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-RimSummaryMultiPlot* createAndAppendSummaryMultiPlot( const std::vector<RimSummaryPlot*>& plots )
+//--------------------------------------------------------------------------------------------------
+/// Name the multi plot, if a name was requested. Must be called before the plot is turned into a
+/// window: the window, and through it the application title bar, takes the name the plot has when
+/// the window is built, and does not follow later changes unless the window is activated.
+//--------------------------------------------------------------------------------------------------
+static void applyPlotTitle( RimSummaryMultiPlot* summaryMultiPlot, const QString& plotTitle )
+{
+    if ( !summaryMultiPlot || plotTitle.isEmpty() ) return;
+
+    summaryMultiPlot->setAutoPlotTitle( false );
+    summaryMultiPlot->setMultiPlotTitle( plotTitle );
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+RimSummaryMultiPlot* createAndAppendSummaryMultiPlot( const std::vector<RimSummaryPlot*>& plots, const QString& plotTitle )
 {
     auto* plotCollection = RimMainPlotCollection::current()->summaryMultiPlotCollection();
 
     auto* summaryMultiPlot = new RimSummaryMultiPlot();
+    applyPlotTitle( summaryMultiPlot, plotTitle );
     summaryMultiPlot->setAsPlotMdiWindow();
     plotCollection->addSummaryMultiPlot( summaryMultiPlot );
 
@@ -392,11 +409,11 @@ RimSummaryMultiPlot* createAndAppendSummaryMultiPlot( const std::vector<RimSumma
 //--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
-RimSummaryMultiPlot* createAndAppendSingleSummaryMultiPlot( RimSummaryPlot* plot )
+RimSummaryMultiPlot* createAndAppendSingleSummaryMultiPlot( RimSummaryPlot* plot, const QString& plotTitle )
 {
     std::vector<RimSummaryPlot*> plots{ plot };
 
-    return createAndAppendSummaryMultiPlot( plots );
+    return createAndAppendSummaryMultiPlot( plots, plotTitle );
 }
 
 //--------------------------------------------------------------------------------------------------
