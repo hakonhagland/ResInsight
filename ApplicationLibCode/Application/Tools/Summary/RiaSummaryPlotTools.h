@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <QString>
+
 class RimPlot;
 class RimMultiPlot;
 class RifEclipseSummaryAddress;
@@ -60,8 +62,11 @@ RimSummaryMultiPlot* createAndAppendDefaultSummaryMultiPlot( const std::vector<R
                                                              bool skipCreationOfPlotBasedOnPreferences = true );
 
 RimSummaryMultiPlot* createAndAppendSingleSummaryMultiPlotNoAutoSettings( RimSummaryPlot* plot );
-RimSummaryMultiPlot* createAndAppendSingleSummaryMultiPlot( RimSummaryPlot* plot );
-RimSummaryMultiPlot* createAndAppendSummaryMultiPlot( const std::vector<RimSummaryPlot*>& plots );
+// plotTitle names the multi plot instead of letting it auto generate a name. It has to be given
+// here rather than set on the returned plot, because the plot is docked during the call and the
+// dock widget takes the name the plot has at that point.
+RimSummaryMultiPlot* createAndAppendSingleSummaryMultiPlot( RimSummaryPlot* plot, const QString& plotTitle = QString() );
+RimSummaryMultiPlot* createAndAppendSummaryMultiPlot( const std::vector<RimSummaryPlot*>& plots, const QString& plotTitle = QString() );
 RimSummaryMultiPlot* createAndAppendSummaryMultiPlot( const std::vector<caf::PdmObjectHandle*>& objects );
 void                 appendPlotsToSummaryMultiPlot( RimSummaryMultiPlot* multiPlot, const std::vector<RimSummaryPlot*>& plots );
 

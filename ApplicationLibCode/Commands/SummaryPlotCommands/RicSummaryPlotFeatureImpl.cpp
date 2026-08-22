@@ -187,8 +187,9 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
     QStringList summaryFileNames;
     QStringList gridFileNames;
     QString     ensembleColoringParameter;
+    QString     plotTitle;
 
-    std::set<QString> validOptions = { "-help", "-h", "-nl", "-s", "-n", "-e", "-c", "-cl" };
+    std::set<QString> validOptions = { "-help", "-h", "-nl", "-s", "-n", "-e", "-c", "-cl", "-t" };
 
     for ( int optionIdx = 0; optionIdx < arguments.size(); ++optionIdx )
     {
@@ -210,6 +211,11 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
                 {
                     optionIdx++;
                     if ( optionIdx < arguments.size() ) ensembleColoringParameter = arguments[optionIdx];
+                }
+                else if ( arguments[optionIdx] == "-t" )
+                {
+                    optionIdx++;
+                    if ( optionIdx < arguments.size() ) plotTitle = arguments[optionIdx];
                 }
             }
             else
@@ -347,7 +353,7 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
             newPlot->setNormalizationEnabled( isNormalizedY );
             newPlot->loadDataAndUpdate();
 
-            RiaSummaryPlotTools::createAndAppendSingleSummaryMultiPlot( newPlot );
+            RiaSummaryPlotTools::createAndAppendSingleSummaryMultiPlot( newPlot, plotTitle );
         }
         else // Multiple plots, one for each separate summary address, put them all in a summary multiplot
         {
@@ -367,7 +373,7 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
                 summaryPlot->loadDataAndUpdate();
             }
 
-            RiaSummaryPlotTools::createAndAppendSummaryMultiPlot( summaryPlots );
+            RiaSummaryPlotTools::createAndAppendSummaryMultiPlot( summaryPlots, plotTitle );
         }
     }
 
@@ -509,6 +515,14 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
         mpw->setBlockViewSelectionOnSubWindowActivated( false );
         RiuPlotMainWindowTools::setExpanded( lastPlotCreated );
         RiuPlotMainWindowTools::selectAsCurrentItem( lastPlotCreated );
+
+        // The plot main window title is a constant, "Plots - ResInsight", so every plot window opened
+        // from the command line looks the same in the window switcher. Name the window after the
+        // requested plot title so windows started from different data sets can be told apart.
+        if ( !plotTitle.isEmpty() )
+        {
+            mpw->setWindowTitle( QString( "Plots - ResInsight - [%1]" ).arg( plotTitle ) );
+        }
 
         RiuMainWindow::closeIfOpen();
     }
@@ -811,6 +825,9 @@ QString RicSummaryPlotFeatureImpl::summaryPlotCommandLineHelpText()
         "  -h\t Include history vectors. Will be read from the summary file if the vectors exist.\n"
         "    \t Only history vectors from the first summary case in the project will be included.\n"
         "  -nl\t Omit legend in plot.\n"
+        "  -t  <plotname>\t Name the plot <plotname> instead of letting it be auto generated. The name is\n"
+        "    \t also put in the window title, which makes plot windows opened from the command line\n"
+        "    \t easier to tell apart.\n"
         "  -s\t Create only one plot including all the defined vectors and cases.\n"
         "  -n\t Scale all curves into the range 0.0-1.0. Useful when using -s.\n"
         "  -e\t Import all the cases as an ensemble, and create ensemble curves sets instead of single curves.\n"
