@@ -54,6 +54,7 @@
 #include "RimProject.h"
 #include "RimSummaryCase.h"
 #include "RimSummaryCurve.h"
+#include "RimSummaryMultiPlot.h"
 #include "RimSummaryMultiPlotCollection.h"
 #include "RimSummaryPlot.h"
 
@@ -62,6 +63,7 @@
 #include "RiuPlotMainWindowTools.h"
 
 #include <QFileInfo>
+#include <QMdiSubWindow>
 #include <QRegularExpression>
 #include <QStringList>
 
@@ -176,6 +178,30 @@ std::vector<RimEclipseCase*> openEclipseCasesForCellPlotting( QStringList gridFi
 }
 
 //--------------------------------------------------------------------------------------------------
+/// Apply the plot name requested with the -t option. Without it the multi plot falls back to
+/// "Plot <index>", which makes every window opened from the command line carry the same title.
+//--------------------------------------------------------------------------------------------------
+static void applyRequestedPlotTitle( RimSummaryMultiPlot* multiPlot, const QString& plotTitle )
+{
+    if ( !multiPlot || plotTitle.isEmpty() ) return;
+
+    multiPlot->setAutoPlotTitle( false );
+    multiPlot->setMultiPlotTitle( plotTitle );
+    multiPlot->updateMdiWindowTitle();
+
+    // updateMdiWindowTitle() names the plot widget, but a later change to the widget title does not
+    // reach the MDI sub window holding it. The main window title is composed from the sub window,
+    // so name that as well, or the window keeps showing the auto generated name.
+    if ( QWidget* plotWidget = multiPlot->viewWidget() )
+    {
+        if ( auto* subWindow = qobject_cast<QMdiSubWindow*>( plotWidget->parentWidget() ) )
+        {
+            subWindow->setWindowTitle( plotTitle );
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
 ///
 //--------------------------------------------------------------------------------------------------
 void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStringList& arguments )
@@ -187,8 +213,9 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
     QStringList summaryFileNames;
     QStringList gridFileNames;
     QString     ensembleColoringParameter;
+    QString     plotTitle;
 
-    std::set<QString> validOptions = { "-help", "-h", "-nl", "-s", "-n", "-e", "-c", "-cl" };
+    std::set<QString> validOptions = { "-help", "-h", "-nl", "-s", "-n", "-e", "-c", "-cl", "-t" };
 
     for ( int optionIdx = 0; optionIdx < arguments.size(); ++optionIdx )
     {
@@ -210,6 +237,11 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
                 {
                     optionIdx++;
                     if ( optionIdx < arguments.size() ) ensembleColoringParameter = arguments[optionIdx];
+                }
+                else if ( arguments[optionIdx] == "-t" )
+                {
+                    optionIdx++;
+                    if ( optionIdx < arguments.size() ) plotTitle = arguments[optionIdx];
                 }
             }
             else
@@ -305,7 +337,8 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
     QStringList gridResultAddressFilters;
     QStringList summaryAddressFilters;
 
-    RimSummaryPlot* lastPlotCreated = nullptr;
+    RimSummaryPlot*      lastPlotCreated = nullptr;
+    RimSummaryMultiPlot* namedMultiPlot  = nullptr;
 
     RiaSummaryStringTools::splitAddressFiltersInGridAndSummary( summaryCasesToUse[0],
                                                                 allCurveAddressFilters,
@@ -347,7 +380,8 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
             newPlot->setNormalizationEnabled( isNormalizedY );
             newPlot->loadDataAndUpdate();
 
-            RiaSummaryPlotTools::createAndAppendSingleSummaryMultiPlot( newPlot );
+            namedMultiPlot = RiaSummaryPlotTools::createAndAppendSingleSummaryMultiPlot( newPlot );
+            applyRequestedPlotTitle( namedMultiPlot, plotTitle );
         }
         else // Multiple plots, one for each separate summary address, put them all in a summary multiplot
         {
@@ -367,7 +401,8 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
                 summaryPlot->loadDataAndUpdate();
             }
 
-            RiaSummaryPlotTools::createAndAppendSummaryMultiPlot( summaryPlots );
+            namedMultiPlot = RiaSummaryPlotTools::createAndAppendSummaryMultiPlot( summaryPlots );
+            applyRequestedPlotTitle( namedMultiPlot, plotTitle );
         }
     }
 
@@ -509,6 +544,11 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
         mpw->setBlockViewSelectionOnSubWindowActivated( false );
         RiuPlotMainWindowTools::setExpanded( lastPlotCreated );
         RiuPlotMainWindowTools::selectAsCurrentItem( lastPlotCreated );
+
+        // Apply the name once more now that showPlotMainWindow() above has the plot window up. The
+        // application at plot creation time runs before the window is shown, so how much of it
+        // reaches the widgets depends on when they were created and placed in their sub window.
+        applyRequestedPlotTitle( namedMultiPlot, plotTitle );
 
         RiuMainWindow::closeIfOpen();
     }
@@ -811,6 +851,8 @@ QString RicSummaryPlotFeatureImpl::summaryPlotCommandLineHelpText()
         "  -h\t Include history vectors. Will be read from the summary file if the vectors exist.\n"
         "    \t Only history vectors from the first summary case in the project will be included.\n"
         "  -nl\t Omit legend in plot.\n"
+        "  -t  <plotname>\t Name the plot <plotname> instead of \"Plot <index>\". The name is shown in the\n"
+        "    \t window title, which makes plot windows opened from the command line easier to tell apart.\n"
         "  -s\t Create only one plot including all the defined vectors and cases.\n"
         "  -n\t Scale all curves into the range 0.0-1.0. Useful when using -s.\n"
         "  -e\t Import all the cases as an ensemble, and create ensemble curves sets instead of single curves.\n"
