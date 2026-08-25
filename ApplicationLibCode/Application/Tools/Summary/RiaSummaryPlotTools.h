@@ -66,8 +66,7 @@ RimSummaryMultiPlot* createAndAppendSingleSummaryMultiPlotNoAutoSettings( RimSum
 // here rather than set on the returned plot, because the plot window is built during the call and
 // takes its title from the name the plot has at that point.
 RimSummaryMultiPlot* createAndAppendSingleSummaryMultiPlot( RimSummaryPlot* plot, const QString& plotTitle = QString() );
-RimSummaryMultiPlot* createAndAppendSummaryMultiPlot( const std::vector<RimSummaryPlot*>& plots,
-                                                      const QString&                      plotTitle = QString() );
+RimSummaryMultiPlot* createAndAppendSummaryMultiPlot( const std::vector<RimSummaryPlot*>& plots, const QString& plotTitle = QString() );
 RimSummaryMultiPlot* createAndAppendSummaryMultiPlot( const std::vector<caf::PdmObjectHandle*>& objects );
 void                 appendPlotsToSummaryMultiPlot( RimSummaryMultiPlot* multiPlot, const std::vector<RimSummaryPlot*>& plots );
 
