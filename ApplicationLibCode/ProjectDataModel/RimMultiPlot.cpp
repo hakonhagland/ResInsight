@@ -53,9 +53,9 @@ RimMultiPlot::RimMultiPlot()
     CAF_PDM_InitFieldNoDefault( &m_projectFileVersionString, "ProjectFileVersionString", "" );
     m_projectFileVersionString.uiCapability()->setUiHidden( true );
 
-    CAF_PDM_InitField( &m_showPlotWindowTitle, "ShowTitleInPlot", true, "Show Title" );
-    CAF_PDM_InitField( &m_showPageNumbers, "ShowPageNumbers", true, "Show Page Numbers" );
-    CAF_PDM_InitField( &m_plotWindowTitle, "PlotDescription", QString( "" ), "Name" );
+    CAF_PDM_InitScriptableField( &m_showPlotWindowTitle, "ShowTitleInPlot", true, "Show Title" );
+    CAF_PDM_InitScriptableField( &m_showPageNumbers, "ShowPageNumbers", true, "Show Page Numbers" );
+    CAF_PDM_InitScriptableField( &m_plotWindowTitle, "PlotDescription", QString( "" ), "Name" );
 
     CAF_PDM_InitFieldNoDefault( &m_plots, "Plots", "" );
     auto reorderability = caf::PdmFieldReorderCapability::addToField( &m_plots );
