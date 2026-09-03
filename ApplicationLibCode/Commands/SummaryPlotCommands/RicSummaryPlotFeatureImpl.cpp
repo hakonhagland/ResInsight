@@ -188,8 +188,9 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
     QStringList gridFileNames;
     QString     ensembleColoringParameter;
     QString     plotTitle;
+    QString     windowTitle;
 
-    std::set<QString> validOptions = { "-help", "-h", "-nl", "-s", "-n", "-e", "-c", "-cl", "-t" };
+    std::set<QString> validOptions = { "-help", "-h", "-nl", "-s", "-n", "-e", "-c", "-cl", "-t", "-wt" };
 
     for ( int optionIdx = 0; optionIdx < arguments.size(); ++optionIdx )
     {
@@ -216,6 +217,11 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
                 {
                     optionIdx++;
                     if ( optionIdx < arguments.size() ) plotTitle = arguments[optionIdx];
+                }
+                else if ( arguments[optionIdx] == "-wt" )
+                {
+                    optionIdx++;
+                    if ( optionIdx < arguments.size() ) windowTitle = arguments[optionIdx];
                 }
             }
             else
@@ -518,10 +524,12 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
 
         // The plot main window title is a constant, "Plots - ResInsight", so every plot window opened
         // from the command line looks the same in the window switcher. Name the window after the
-        // requested plot title so windows started from different data sets can be told apart.
-        if ( !plotTitle.isEmpty() )
+        // requested title so windows started from different data sets can be told apart. -wt lets
+        // the window carry a longer, unique title while the plot itself keeps a short name.
+        QString effectiveWindowTitle = windowTitle.isEmpty() ? plotTitle : windowTitle;
+        if ( !effectiveWindowTitle.isEmpty() )
         {
-            mpw->setWindowTitle( QString( "Plots - ResInsight - [%1]" ).arg( plotTitle ) );
+            mpw->setWindowTitle( QString( "Plots - ResInsight - [%1]" ).arg( effectiveWindowTitle ) );
         }
 
         RiuMainWindow::closeIfOpen();
@@ -825,9 +833,11 @@ QString RicSummaryPlotFeatureImpl::summaryPlotCommandLineHelpText()
         "  -h\t Include history vectors. Will be read from the summary file if the vectors exist.\n"
         "    \t Only history vectors from the first summary case in the project will be included.\n"
         "  -nl\t Omit legend in plot.\n"
-        "  -t  <plotname>\t Name the plot <plotname> instead of letting it be auto generated. The name is\n"
-        "    \t also put in the window title, which makes plot windows opened from the command line\n"
-        "    \t easier to tell apart.\n"
+        "  -t  <plotname>\t Name the plot <plotname> instead of letting it be auto generated. Unless -wt is\n"
+        "    \t given, the name is also put in the window title, which makes plot windows opened from\n"
+        "    \t the command line easier to tell apart.\n"
+        "  -wt <title>\t Put <title> in the window title instead of the plot name. Useful when the window\n"
+        "    \t needs a long unique title but the plot, whose name is repeated on every page, a short one.\n"
         "  -s\t Create only one plot including all the defined vectors and cases.\n"
         "  -n\t Scale all curves into the range 0.0-1.0. Useful when using -s.\n"
         "  -e\t Import all the cases as an ensemble, and create ensemble curves sets instead of single curves.\n"
