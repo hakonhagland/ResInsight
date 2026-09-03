@@ -54,6 +54,7 @@ RimMultiPlot::RimMultiPlot()
     m_projectFileVersionString.uiCapability()->setUiHidden( true );
 
     CAF_PDM_InitField( &m_showPlotWindowTitle, "ShowTitleInPlot", true, "Show Title" );
+    CAF_PDM_InitField( &m_showPageNumbers, "ShowPageNumbers", true, "Show Page Numbers" );
     CAF_PDM_InitField( &m_plotWindowTitle, "PlotDescription", QString( "" ), "Name" );
 
     CAF_PDM_InitFieldNoDefault( &m_plots, "Plots", "" );
@@ -111,6 +112,7 @@ RimMultiPlot& RimMultiPlot::operator=( RimMultiPlot&& rhs )
     // These all had their own description at top level which we don't want to overwrite.
 
     m_showPlotWindowTitle      = rhs.m_showPlotWindowTitle;
+    m_showPageNumbers          = rhs.m_showPageNumbers;
     m_columnCount              = rhs.m_columnCount;
     m_rowsPerPage              = rhs.m_rowsPerPage;
     m_showIndividualPlotTitles = rhs.m_showIndividualPlotTitles;
@@ -158,6 +160,24 @@ bool RimMultiPlot::isMultiPlotTitleVisible() const
 void RimMultiPlot::setMultiPlotTitleVisible( bool visible )
 {
     m_showPlotWindowTitle = visible;
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+bool RimMultiPlot::arePageNumbersVisible() const
+{
+    return m_showPageNumbers;
+}
+
+//--------------------------------------------------------------------------------------------------
+/// Whether the page heading carries a "<page>/<pages>" counter when the plot has several pages.
+/// Pushed to the viewer at once, so it can be called after the plot has been shown.
+//--------------------------------------------------------------------------------------------------
+void RimMultiPlot::setPageNumbersVisible( bool visible )
+{
+    m_showPageNumbers = visible;
+    if ( m_viewer ) m_viewer->setPageNumbersVisible( visible );
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -352,6 +372,7 @@ void RimMultiPlot::doUpdateLayout()
     {
         m_viewer->setPlotTitle( description() );
         m_viewer->setTitleVisible( m_showPlotWindowTitle );
+        m_viewer->setPageNumbersVisible( m_showPageNumbers );
         m_viewer->setSubTitlesVisible( m_showIndividualPlotTitles );
 
         m_viewer->setTitleFontSizes( titleFontSize(), subTitleFontSize() );
@@ -706,7 +727,7 @@ void RimMultiPlot::fieldChangedByUi( const caf::PdmFieldHandle* changedField, co
     {
         updateLayout();
     }
-    else if ( changedField == &m_showPlotWindowTitle || changedField == &m_plotWindowTitle )
+    else if ( changedField == &m_showPlotWindowTitle || changedField == &m_showPageNumbers || changedField == &m_plotWindowTitle )
     {
         updatePlotTitles();
         applyPlotWindowTitleToWidgets();
@@ -763,6 +784,7 @@ void RimMultiPlot::defineEditorAttribute( const caf::PdmFieldHandle* field, QStr
 void RimMultiPlot::uiOrderingForMultiPlotLayout( QString uiConfigName, caf::PdmUiOrdering& uiOrdering )
 {
     uiOrdering.add( &m_showPlotWindowTitle );
+    uiOrdering.add( &m_showPageNumbers );
     uiOrdering.add( &m_plotWindowTitle );
     uiOrdering.add( &m_showIndividualPlotTitles );
     uiOrdering.add( &m_subTitleFontSize );
@@ -845,6 +867,7 @@ void RimMultiPlot::applyPlotWindowTitleToWidgets()
     if ( m_viewer )
     {
         m_viewer->setTitleVisible( m_showPlotWindowTitle() );
+        m_viewer->setPageNumbersVisible( m_showPageNumbers() );
         m_viewer->setPlotTitle( multiPlotTitle() );
     }
     updateWindowTitle();

@@ -68,6 +68,7 @@ public:
     void setPlotTitle( const QString& plotTitle );
 
     void setTitleVisible( bool visible );
+    void setPageNumbersVisible( bool visible );
     void setSubTitlesVisible( bool visible );
     void scheduleTitleUpdate();
 
@@ -155,6 +156,7 @@ protected:
     caf::PdmPointer<RimMultiPlot>     m_plotDefinition;
     QString                           m_plotTitle;
     bool                              m_titleVisible;
+    bool                              m_pageNumbersVisible;
     bool                              m_subTitlesVisible;
     bool                              m_previewMode;
     int                               m_currentPageIndex;

@@ -61,6 +61,8 @@ public:
 
     bool    isMultiPlotTitleVisible() const;
     void    setMultiPlotTitleVisible( bool visible );
+    bool    arePageNumbersVisible() const;
+    void    setPageNumbersVisible( bool visible );
     QString multiPlotTitle() const;
     void    setMultiPlotTitle( const QString& title );
 
@@ -163,6 +165,7 @@ private:
 protected:
     caf::PdmField<QString>         m_projectFileVersionString;
     caf::PdmField<bool>            m_showPlotWindowTitle;
+    caf::PdmField<bool>            m_showPageNumbers;
     caf::PdmField<QString>         m_plotWindowTitle;
     caf::PdmField<ColumnCountEnum> m_columnCount;
     caf::PdmField<RowCountEnum>    m_rowsPerPage;

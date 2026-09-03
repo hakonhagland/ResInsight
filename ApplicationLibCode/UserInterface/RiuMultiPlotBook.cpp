@@ -101,6 +101,7 @@ RiuMultiPlotBook::RiuMultiPlotBook( RimMultiPlot* plotDefinition, QWidget* paren
     , m_plotDefinition( plotDefinition )
     , m_plotTitle( "Multi Plot" )
     , m_titleVisible( true )
+    , m_pageNumbersVisible( true )
     , m_subTitlesVisible( true )
     , m_previewMode( true )
     , m_currentPageIndex( 0 )
@@ -229,6 +230,17 @@ void RiuMultiPlotBook::setTitleVisible( bool visible )
     {
         page->setTitleVisible( visible );
     }
+}
+
+//--------------------------------------------------------------------------------------------------
+///
+//--------------------------------------------------------------------------------------------------
+void RiuMultiPlotBook::setPageNumbersVisible( bool visible )
+{
+    if ( m_pageNumbersVisible == visible ) return;
+
+    m_pageNumbersVisible = visible;
+    updatePageTitles();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -522,7 +534,7 @@ void RiuMultiPlotBook::updatePageTitles()
 {
     if ( m_pages.isEmpty() ) return;
 
-    if ( m_pages.size() > 1 )
+    if ( m_pages.size() > 1 && m_pageNumbersVisible )
     {
         for ( int i = 0; i < m_pages.size(); ++i )
         {
@@ -532,7 +544,10 @@ void RiuMultiPlotBook::updatePageTitles()
     }
     else
     {
-        m_pages[0]->setPlotTitle( QString( "%1" ).arg( m_plotTitle ) );
+        for ( auto page : m_pages )
+        {
+            page->setPlotTitle( m_plotTitle );
+        }
     }
 }
 

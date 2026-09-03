@@ -54,6 +54,7 @@
 #include "RimProject.h"
 #include "RimSummaryCase.h"
 #include "RimSummaryCurve.h"
+#include "RimSummaryMultiPlot.h"
 #include "RimSummaryMultiPlotCollection.h"
 #include "RimSummaryPlot.h"
 
@@ -189,8 +190,9 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
     QString     ensembleColoringParameter;
     QString     plotTitle;
     QString     windowTitle;
+    bool        hidePageNumbers = false;
 
-    std::set<QString> validOptions = { "-help", "-h", "-nl", "-s", "-n", "-e", "-c", "-cl", "-t", "-wt" };
+    std::set<QString> validOptions = { "-help", "-h", "-nl", "-s", "-n", "-e", "-c", "-cl", "-t", "-wt", "-np" };
 
     for ( int optionIdx = 0; optionIdx < arguments.size(); ++optionIdx )
     {
@@ -207,6 +209,7 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
             if ( validOptions.count( arguments[optionIdx] ) )
             {
                 options.push_back( arguments[optionIdx] );
+                if ( arguments[optionIdx] == "-np" ) hidePageNumbers = true;
 
                 if ( arguments[optionIdx] == "-c" || arguments[optionIdx] == "-cl" )
                 {
@@ -359,7 +362,8 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
             newPlot->setNormalizationEnabled( isNormalizedY );
             newPlot->loadDataAndUpdate();
 
-            RiaSummaryPlotTools::createAndAppendSingleSummaryMultiPlot( newPlot, plotTitle );
+            auto* multiPlot = RiaSummaryPlotTools::createAndAppendSingleSummaryMultiPlot( newPlot, plotTitle );
+            if ( hidePageNumbers && multiPlot ) multiPlot->setPageNumbersVisible( false );
         }
         else // Multiple plots, one for each separate summary address, put them all in a summary multiplot
         {
@@ -379,7 +383,8 @@ void RicSummaryPlotFeatureImpl::createSummaryPlotsFromArgumentLine( const QStrin
                 summaryPlot->loadDataAndUpdate();
             }
 
-            RiaSummaryPlotTools::createAndAppendSummaryMultiPlot( summaryPlots, plotTitle );
+            auto* multiPlot = RiaSummaryPlotTools::createAndAppendSummaryMultiPlot( summaryPlots, plotTitle );
+            if ( hidePageNumbers && multiPlot ) multiPlot->setPageNumbersVisible( false );
         }
     }
 
@@ -838,6 +843,8 @@ QString RicSummaryPlotFeatureImpl::summaryPlotCommandLineHelpText()
         "    \t the command line easier to tell apart.\n"
         "  -wt <title>\t Put <title> in the window title instead of the plot name. Useful when the window\n"
         "    \t needs a long unique title but the plot, whose name is repeated on every page, a short one.\n"
+        "  -np\t Omit the <page>/<pages> counter from the page headings of a multi page plot, so that\n"
+        "    \t an exported page carries only the plot name.\n"
         "  -s\t Create only one plot including all the defined vectors and cases.\n"
         "  -n\t Scale all curves into the range 0.0-1.0. Useful when using -s.\n"
         "  -e\t Import all the cases as an ensemble, and create ensemble curves sets instead of single curves.\n"
